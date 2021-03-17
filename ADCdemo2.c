@@ -39,7 +39,7 @@
 //
 // 2541-2543 (2.92V, 2.06V showed up on power supply screen when on)
 //
-// A = 1250V where A is the ADC output
+// A = 1250V (where A is the ADC output)
 
 
 //*****************************************************************************
@@ -55,6 +55,11 @@
 //*****************************************************************************
 static circBuf_t g_inBuffer;		// Buffer of size BUF_SIZE integers (sample values)
 static uint32_t g_ulSampCnt;	// Counter for the interrupts
+
+// 12-bit ADC hence the maximum value is 4095 (i.e. at 3.3V)
+//
+// We have a 0.8V difference so 4095 * 0.8V / 3.3V is roughly 993
+static const uint32_t altitudeDelta = 993;
 
 //*****************************************************************************
 //
@@ -169,51 +174,80 @@ initDisplay (void)
 //
 //*****************************************************************************
 void
-displayMeanVal(uint16_t meanVal, uint32_t count)
+displayMeanVal(uint16_t meanVal, uint32_t count, uint32_t altitudePercentage, uint32_t initAltitude)
 {
 	char string[17];  // 16 characters across the display
 
-    OLEDStringDraw ("ADC demo 1", 0, 0);
+    // OLEDStringDraw ("ADC demo 1", 0, 0);
+	usnprintf (string, sizeof(string), "InitAlt. = %4d", initAltitude);
+	OLEDStringDraw (string, 0, 0);
 	
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
-    usnprintf (string, sizeof(string), "Mean ADC = %4d", meanVal);
+    // usnprintf (string, sizeof(string), "Mean ADC = %4d", meanVal);
+    usnprintf (string, sizeof(string), "Alt. = %4d%%", altitudePercentage);
     // Update line on display.
     OLEDStringDraw (string, 0, 1);
+
+    usnprintf (string, sizeof(string), "RawAlt. = %4d", meanVal);
+    OLEDStringDraw (string, 0, 2);
 
     usnprintf (string, sizeof(string), "Sample # %5d", count);
     OLEDStringDraw (string, 0, 3);
 }
 
-
-int
-main(void)
+//*****************************************************************************
+// Retrieves the mean value of the buffer contents
+//*****************************************************************************
+uint32_t getMeanVal(void)
 {
-	uint16_t i;
-	int32_t sum;
-	
+    uint16_t i;
+    // Background task: calculate the (approximate) mean of the values in the
+    // circular buffer and display it, together with the sample number.
+    uint32_t sum = 0;
+    for (i = 0; i < BUF_SIZE; i++)
+        sum += readCircBuf (&g_inBuffer);
+
+    return (2 * sum + BUF_SIZE) / 2 / BUF_SIZE;
+}
+
+int main(void)
+{
+	uint32_t mean = 0, landedAltitude = 0, altitudePercentage = 0;
+	bool getInitHeight = true;
+
 	initClock ();
 	initADC ();
 	initDisplay ();
 	initCircBuf (&g_inBuffer, BUF_SIZE);
 
-    //
     // Enable interrupts to the processor.
     IntMasterEnable();
 
-	while (1)
-	{
-		//
-		// Background task: calculate the (approximate) mean of the values in the
-		// circular buffer and display it, together with the sample number.
-		sum = 0;
-		for (i = 0; i < BUF_SIZE; i++)
-			sum = sum + readCircBuf (&g_inBuffer);
-		// Calculate and display the rounded mean of the buffer contents
-		displayMeanVal ((2 * sum + BUF_SIZE) / 2 / BUF_SIZE, g_ulSampCnt);
+    // Delay by one second to give it enough time to fill up the buffer.
+    SysCtlDelay (SysCtlClockGet() / 3);
 
+	while (1) {
+	    mean = getMeanVal();
+
+	    if (getInitHeight) {
+	        landedAltitude = mean;
+	        getInitHeight = false;
+	    }
+
+	    altitudePercentage = (landedAltitude - mean) * 100 / altitudeDelta;
+
+		// Calculate and display the rounded mean of the buffer contents
+		// displayMeanVal (mean, g_ulSampCnt);
+
+	    // Calculate and display the altitude percentage of the buffer contents
+	    displayMeanVal (mean, g_ulSampCnt, altitudePercentage, landedAltitude);
+
+	    // Assumes three useless instructions per "count" of the delay, hence
+	    // divide by six and not two
+	    //
 		// SysCtlDelay (SysCtlClockGet() / 6);  // Update display at ~ 2 Hz
-		SysCtlDelay (SysCtlClockGet() / 30); // Update display at ~ 5 Hz
+		SysCtlDelay (SysCtlClockGet() / 30);
 	}
 }
 
