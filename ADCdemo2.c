@@ -187,26 +187,26 @@ initDisplay (void)
 //
 //*****************************************************************************
 void
-displayMeanVal(uint16_t meanVal, uint32_t count, uint32_t altitudePercentage, uint32_t initAltitude)
+displayMeanVal(uint16_t meanVal, uint32_t count, uint32_t altitudePercentage, uint32_t initAltitude, uint8_t state)
 {
 	char string[17];  // 16 characters across the display
-
-    // OLEDStringDraw ("ADC demo 1", 0, 0);
-	usnprintf (string, sizeof(string), "InitAlt. = %4d", initAltitude);
-	OLEDStringDraw (string, 0, 0);
 	
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
-    // usnprintf (string, sizeof(string), "Mean ADC = %4d", meanVal);
-    usnprintf (string, sizeof(string), "Alt. = %4d%%", altitudePercentage);
-    // Update line on display.
-    OLEDStringDraw (string, 0, 1);
 
-    usnprintf (string, sizeof(string), "RawAlt. = %4d", meanVal);
-    OLEDStringDraw (string, 0, 2);
+	// Display the altitude percentage
+	if (state == 0) {
+	    usnprintf(string, sizeof(string), "Alt. = %4d%%", altitudePercentage);
+	// Display the mean ADC value
+	} else if (state == 1) {
+	    usnprintf(string, sizeof(string), "RawAlt. = %4d", meanVal);
+	// OFF
+	} else {
+	    usnprintf(string, sizeof(string), "                ");
+	}
 
-    usnprintf (string, sizeof(string), "Sample # %5d", count);
-    OLEDStringDraw (string, 0, 3);
+	// Update line on display.
+    OLEDStringDraw(string, 0, 1);
 }
 
 //*****************************************************************************
@@ -228,6 +228,7 @@ int main(void)
 {
 	uint32_t mean = 0, landedAltitude = 0, altitudePercentage = 0;
 	bool getInitHeight = true;
+	uint8_t state = 0;
 
 	initButtons();
 	initClock();
@@ -248,6 +249,12 @@ int main(void)
 	        getInitHeight = true;
 	    }
 
+	    if (checkButton(RIGHT) == PUSHED) {
+	        if (++state > 2) {
+	            state = 0;
+	        }
+	    }
+
 	    if (getInitHeight) {
 	        landedAltitude = mean;
 	        getInitHeight = false;
@@ -260,7 +267,7 @@ int main(void)
 		// displayMeanVal (mean, g_ulSampCnt);
 
 	    // Calculate and display the altitude percentage of the buffer contents
-	    displayMeanVal (mean, g_ulSampCnt, altitudePercentage, landedAltitude);
+	    displayMeanVal (mean, g_ulSampCnt, altitudePercentage, landedAltitude, state);
 
 	    // Assumes three useless instructions per "count" of the delay, hence
 	    // divide by six and not two
