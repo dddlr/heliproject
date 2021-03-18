@@ -63,7 +63,13 @@ static uint32_t g_ulSampCnt;	// Counter for the interrupts
 //
 // We have a 0.8V difference so 4095 * 0.8V / 3.3V is roughly 993
 // static const uint32_t altitudeDelta = 993;
-static const uint32_t altitudeDelta = 425;
+
+// Represents a 0.8V difference on the testing stations.
+//
+// The ADC values we get with the testing stations are much lower than with a
+// power supply, likely because of some voltage drop caused by the Tiva board
+// (Number derived through experimentation with actual testing stations)
+static const uint32_t altitudeDelta = 430;
 
 //*****************************************************************************
 //
