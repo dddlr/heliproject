@@ -239,7 +239,8 @@ int main(void)
 	        getInitHeight = false;
 	    }
 
-	    altitudePercentage = (landedAltitude - mean) * 100 / altitudeDelta;
+	    if (mean > landedAltitude) altitudePercentage = 0;
+	    else altitudePercentage = (landedAltitude - mean) * 100 / altitudeDelta;
 
 		// Calculate and display the rounded mean of the buffer contents
 		// displayMeanVal (mean, g_ulSampCnt);
