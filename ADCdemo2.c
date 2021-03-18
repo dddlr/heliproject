@@ -23,6 +23,7 @@
 #include "utils/ustdlib.h"
 #include "circBufT.h"
 #include "OrbitOLED/OrbitOLEDInterface.h"
+#include "buttons4.h"
 
 // Measurements
 // ============
@@ -79,6 +80,8 @@ static const uint32_t altitudeDelta = 430;
 void
 SysTickIntHandler(void)
 {
+    // Poll the buttons
+    updateButtons();
     //
     // Initiate a conversion
     //
@@ -226,9 +229,10 @@ int main(void)
 	uint32_t mean = 0, landedAltitude = 0, altitudePercentage = 0;
 	bool getInitHeight = true;
 
-	initClock ();
-	initADC ();
-	initDisplay ();
+	initButtons();
+	initClock();
+	initADC();
+	initDisplay();
 	initCircBuf (&g_inBuffer, BUF_SIZE);
 
     // Enable interrupts to the processor.
@@ -239,6 +243,10 @@ int main(void)
 
 	while (1) {
 	    mean = getMeanVal();
+
+	    if (checkButton(LEFT) == PUSHED) {
+	        getInitHeight = true;
+	    }
 
 	    if (getInitHeight) {
 	        landedAltitude = mean;
