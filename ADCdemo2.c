@@ -39,7 +39,7 @@
 //
 // 2541-2543 (2.92V, 2.06V showed up on power supply screen when on)
 //
-// A = 1250V (where A is the ADC output)
+// OUTPUT = 1250*V (where OUTPUT is the ADC output)
 
 
 //*****************************************************************************
@@ -48,7 +48,10 @@
 
 #define BUF_SIZE 10
 // Assuming vertical motion of helicopter is < 4Hz
-#define SAMPLE_RATE_HZ 10
+//
+// 60 Hz allows the mean/buffer samples to be updated virtually instantaneously
+// for the human eye
+#define SAMPLE_RATE_HZ 60
 
 //*****************************************************************************
 // Global variables
