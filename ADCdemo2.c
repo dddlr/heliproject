@@ -252,7 +252,7 @@ int main(void)
 	        getInitHeight = true;
 	    }
 
-	    if (checkButton(RIGHT) == PUSHED) {
+	    if (checkButton(UP) == PUSHED) {
 	        if (++state > 2) {
 	            state = 0;
 	        }
