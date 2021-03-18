@@ -62,7 +62,8 @@ static uint32_t g_ulSampCnt;	// Counter for the interrupts
 // 12-bit ADC hence the maximum value is 4095 (i.e. at 3.3V)
 //
 // We have a 0.8V difference so 4095 * 0.8V / 3.3V is roughly 993
-static const uint32_t altitudeDelta = 993;
+// static const uint32_t altitudeDelta = 993;
+static const uint32_t altitudeDelta = 425;
 
 //*****************************************************************************
 //
