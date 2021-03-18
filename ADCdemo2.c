@@ -187,10 +187,11 @@ initDisplay (void)
 //
 //*****************************************************************************
 void
-displayMeanVal(uint16_t meanVal, uint32_t count, uint32_t altitudePercentage, uint32_t initAltitude, uint8_t state)
+displayMeanVal(uint16_t meanVal, uint32_t altitudePercentage, uint8_t state)
 {
-	char string[17];  // 16 characters across the display
-	
+    // 16 characters across the display
+    // Ensure that resulting string is empty wherever text is not added
+    char string[17];
     // Form a new string for the line.  The maximum width specified for the
     //  number field ensures it is displayed right justified.
 
@@ -199,9 +200,9 @@ displayMeanVal(uint16_t meanVal, uint32_t count, uint32_t altitudePercentage, ui
 	    usnprintf(string, sizeof(string), "Alt. = %4d%%", altitudePercentage);
 	// Display the mean ADC value
 	} else if (state == 1) {
-	    usnprintf(string, sizeof(string), "RawAlt. = %4d", meanVal);
-	// OFF
+	    usnprintf(string, sizeof(string), "Mean = %5d", meanVal);
 	} else {
+	    // If state is 2, don't display any text.
 	    usnprintf(string, sizeof(string), "                ");
 	}
 
@@ -240,7 +241,9 @@ int main(void)
     IntMasterEnable();
 
     // Delay by one second to give it enough time to fill up the buffer.
-    SysCtlDelay (SysCtlClockGet() / 3);
+    // Note that SysCtlDelay runs three instructions per loop so this is
+    // three times longer than necessary - this is for safety reasons.
+    SysCtlDelay(SysCtlClockGet() * BUF_SIZE / SAMPLE_RATE_HZ);
 
 	while (1) {
 	    mean = getMeanVal();
@@ -263,11 +266,8 @@ int main(void)
 	    if (mean > landedAltitude) altitudePercentage = 0;
 	    else altitudePercentage = (landedAltitude - mean) * 100 / altitudeDelta;
 
-		// Calculate and display the rounded mean of the buffer contents
-		// displayMeanVal (mean, g_ulSampCnt);
-
-	    // Calculate and display the altitude percentage of the buffer contents
-	    displayMeanVal (mean, g_ulSampCnt, altitudePercentage, landedAltitude, state);
+	    // Calculate and display altitude
+	    displayMeanVal (mean, altitudePercentage, state);
 
 	    // Assumes three useless instructions per "count" of the delay, hence
 	    // divide by six and not two
