@@ -47,12 +47,12 @@
 // Constants
 //*****************************************************************************
 
-#define BUF_SIZE 10
+#define BUF_SIZE 8
 // Assuming vertical motion of helicopter is < 4Hz
 //
 // 60 Hz allows the mean/buffer samples to be updated virtually instantaneously
 // for the human eye
-#define SAMPLE_RATE_HZ 60
+#define SAMPLE_RATE_HZ 64
 
 //*****************************************************************************
 // Global variables
