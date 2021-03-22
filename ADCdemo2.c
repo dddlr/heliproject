@@ -70,7 +70,7 @@ static uint32_t g_ulSampCnt;	// Counter for the interrupts
 // The ADC values we get with the testing stations are much lower than with a
 // power supply, likely because of some voltage drop caused by the Tiva board
 // (Number derived through experimentation with actual testing stations)
-static const uint32_t altitudeDelta = 430;
+static const uint32_t altitudeDelta = 388;
 
 //*****************************************************************************
 //
