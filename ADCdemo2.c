@@ -63,14 +63,15 @@ static uint32_t g_ulSampCnt;	// Counter for the interrupts
 // 12-bit ADC hence the maximum value is 4095 (i.e. at 3.3V)
 //
 // We have a 0.8V difference so 4095 * 0.8V / 3.3V is roughly 993
-// static const uint32_t altitudeDelta = 993;
+static const uint32_t altitudeDelta = 993;
 
 // Represents a 0.8V difference on the testing stations.
+// Assuming PE4 pin isn't cut
 //
 // The ADC values we get with the testing stations are much lower than with a
 // power supply, likely because of some voltage drop caused by the Tiva board
 // (Number derived through experimentation with actual testing stations)
-static const uint32_t altitudeDelta = 388;
+// static const uint32_t altitudeDelta = 412;
 
 //*****************************************************************************
 //
@@ -95,8 +96,7 @@ SysTickIntHandler(void)
 // Writes to the circular buffer.
 //
 //*****************************************************************************
-void
-ADCIntHandler(void)
+void ADCIntHandler(void)
 {
 	uint32_t ulValue;
 	
@@ -115,8 +115,7 @@ ADCIntHandler(void)
 //*****************************************************************************
 // Initialisation functions for the clock (incl. SysTick), ADC, display
 //*****************************************************************************
-void
-initClock (void)
+void initClock(void)
 {
     // Set the clock rate to 20 MHz
     SysCtlClockSet (SYSCTL_SYSDIV_10 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN |
@@ -134,8 +133,7 @@ initClock (void)
     SysTickEnable();
 }
 
-void 
-initADC (void)
+void initADC(void)
 {
     //
     // The ADC0 peripheral must be enabled for configuration and use.
@@ -174,10 +172,9 @@ initADC (void)
     ADCIntEnable(ADC0_BASE, 3);
 }
 
-void
-initDisplay (void)
+void initDisplay(void)
 {
-    // intialise the Orbit OLED display
+    // Initialise the Orbit OLED display
     OLEDInitialise ();
 }
 
@@ -186,8 +183,7 @@ initDisplay (void)
 // Function to display the mean ADC value (10-bit value, note) and sample count.
 //
 //*****************************************************************************
-void
-displayMeanVal(uint16_t meanVal, uint32_t altitudePercentage, uint8_t state)
+void displayMeanVal(uint16_t meanVal, uint32_t altitudePercentage, uint8_t state)
 {
     // 16 characters across the display
     // Ensure that resulting string is empty wherever text is not added
