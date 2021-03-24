@@ -183,7 +183,7 @@ void initDisplay(void)
 // Function to display the mean ADC value (10-bit value, note) and sample count.
 //
 //*****************************************************************************
-void displayMeanVal(uint16_t meanVal, uint32_t altitudePercentage, uint8_t state)
+void displayMeanVal(int16_t meanVal, int32_t altitudePercentage, uint8_t state)
 {
     // 16 characters across the display
     // Ensure that resulting string is empty wherever text is not added
@@ -223,7 +223,7 @@ uint32_t getMeanVal(void)
 
 int main(void)
 {
-	uint32_t mean = 0, landedAltitude = 0, altitudePercentage = 0;
+	int32_t mean = 0, landedAltitude = 0, altitudePercentage = 0;
 	bool getInitHeight = true;
 	uint8_t state = 0;
 
