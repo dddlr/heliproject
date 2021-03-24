@@ -259,8 +259,7 @@ int main(void)
 	        getInitHeight = false;
 	    }
 
-	    if (mean > landedAltitude) altitudePercentage = 0;
-	    else altitudePercentage = (landedAltitude - mean) * 100 / altitudeDelta;
+	    altitudePercentage = (landedAltitude - mean) * 100 / altitudeDelta;
 
 	    // Calculate and display altitude
 	    displayMeanVal (mean, altitudePercentage, state);
