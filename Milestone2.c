@@ -23,6 +23,7 @@
 #include "driverlib/interrupt.h"
 #include "driverlib/debug.h"
 #include "utils/ustdlib.h"
+#include "OrbitOLED/OrbitOLEDInterface.h"
 #include "circBufT.h"
 
 //*****************************************************************************
@@ -36,7 +37,7 @@
 /*
  * Yaw configuration
  */
-#define YAW_QUAD_PERIPH_GPIO    SYSCTL_PERIPH_GPIOC
+#define YAW_QUAD_PERIPH_GPIO    SYSCTL_PERIPH_GPIOB
 #define YAW_QUAD_BASE           GPIO_PORTB_BASE
 #define YAW_QUAD_INT_PIN_0      GPIO_INT_PIN_0
 #define YAW_QUAD_PIN_0          GPIO_PIN_0
@@ -56,6 +57,10 @@
 // skipped a state, indicates a problem in the code
 #define QUAD_ERROR 2
 
+int8_t yaw = 0;
+int8_t aOutput = 0;
+int8_t bOutput = 0;
+
 int8_t quadratureLookup[16] = {
         QUAD_NULL,  QUAD_CW,    QUAD_CCW,   QUAD_ERROR,
         QUAD_CCW,   QUAD_NULL,  QUAD_ERROR, QUAD_CW,
@@ -66,6 +71,36 @@ int8_t quadratureLookup[16] = {
 // Prototype functions
 void initYaw(void);
 void yawIntHandler(void);
+
+void initClock(void)
+{
+    // Set the clock rate to 20 MHz
+    SysCtlClockSet (SYSCTL_SYSDIV_10 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN |
+                   SYSCTL_XTAL_16MHZ);
+}
+
+void initDisplay(void)
+{
+    // Initialise the Orbit OLED display
+    OLEDInitialise();
+}
+
+void displayYaw(int8_t yaw)
+{
+    char string[17];
+    usnprintf(string, sizeof(string), "Yaw = %4d", yaw);
+    OLEDStringDraw(string, 0, 1);
+}
+
+void displayOutput(int32_t a, int32_t b)
+{
+    char string[17];
+    usnprintf(string, sizeof(string), "a = %4d", a != 0);
+    OLEDStringDraw(string, 0, 1);
+
+    usnprintf(string, sizeof(string), "b = %4d", b != 0);
+    OLEDStringDraw(string, 0, 2);
+}
 
 void initYaw(void)
 {
@@ -80,8 +115,8 @@ void initYaw(void)
     GPIOPinTypeGPIOInput(YAW_QUAD_BASE, YAW_QUAD_PIN_0 | YAW_QUAD_PIN_1);
 
     // Set the GPIO pins Weak Pull Down, 2mA
-//    GPIOPadConfigSet(YAW_QUAD_BASE, YAW_QUAD_PIN_0 | YAW_QUAD_PIN_1,
-//                     YAW_QUAD_SIG_STRENGTH, YAW_QUAD_PIN_TYPE);
+    GPIOPadConfigSet(YAW_QUAD_BASE, YAW_QUAD_PIN_0 | YAW_QUAD_PIN_1,
+                     YAW_QUAD_SIG_STRENGTH, YAW_QUAD_PIN_TYPE);
 
     // Set the GPIO pins to generate interrupts on both rising and falling edges
     GPIOIntTypeSet(YAW_QUAD_BASE, YAW_QUAD_PIN_0 | YAW_QUAD_PIN_1,
@@ -96,15 +131,27 @@ void initYaw(void)
 
 void yawIntHandler(void)
 {
-    int32_t aOutput = 0;
-    int32_t bOutput = 0;
     // Clear the interrupt flags for PB0 and PB1
     GPIOIntClear(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_0 | YAW_QUAD_INT_PIN_1);
 
     // read A and B
     aOutput = GPIOPinRead(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_0);
     bOutput = GPIOPinRead(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_1);
-
-
 }
 
+int main(void)
+{
+    initClock();
+    initYaw();
+    initDisplay();
+
+    OLEDStringDraw("bloh world", 0, 2);
+    OLEDStringDraw("bloh world", 0, 1);
+    OLEDStringDraw("bloh world", 0, 0);
+
+    while (1) {
+        SysCtlDelay(SysCtlClockGet () / 120);
+        // displayYaw(yaw);
+        displayOutput(aOutput, bOutput);
+    }
+}
