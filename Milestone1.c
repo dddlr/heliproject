@@ -1,12 +1,15 @@
 //*****************************************************************************
 //
-// ADCdemo1.c - Simple interrupt driven program which samples with AIN0
+// Milestone1.c - The first milestone task of the helicopter project
 //
-// Author:  P.J. Bones	UCECE
-// Last modified:	8.2.2018
+// Author:  Coppy Nawaphanarat (44035285), Grant Wong, Will Archer
+// Last modified:	24/03/2021
 //
 //*****************************************************************************
-// Based on the 'convert' series from 2016
+// Description:
+// This module contains the first milestone task of the helicopter project. It is for
+// calculating the mean altitude as a raw value and converts into a percentage
+// of the overall altitude. Both values will be display on the Orbit Board.
 //*****************************************************************************
 
 #include <stdint.h>
