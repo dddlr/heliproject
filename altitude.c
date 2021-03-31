@@ -27,35 +27,7 @@
 #include "circBufT.h"
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "buttons4.h"
-
-// Measurements
-// ============
-//
-// 0.01A
-//
-// ADC output
-// 333-337 (0.27V)
-// 631-634 (0.52V)
-// 931-933 (0.76V)
-// 1251-1253 (1.01V)
-// 1869-1871 (1.50V)
-// 2480-2482 (2.01V)
-//
-// 2541-2543 (2.92V, 2.06V showed up on power supply screen when on)
-//
-// OUTPUT = 1250*V (where OUTPUT is the ADC output)
-
-
-//*****************************************************************************
-// Constants
-//*****************************************************************************
-
-#define BUF_SIZE 8
-// Assuming vertical motion of helicopter is < 4Hz
-//
-// 60 Hz allows the mean/buffer samples to be updated virtually instantaneously
-// for the human eye
-#define SAMPLE_RATE_HZ 64
+#include "altitude.h"
 
 //*****************************************************************************
 // Global variables
@@ -63,26 +35,12 @@
 static circBuf_t g_inBuffer;		// Buffer of size BUF_SIZE integers (sample values)
 static uint32_t g_ulSampCnt;	// Counter for the interrupts
 
-// 12-bit ADC hence the maximum value is 4095 (i.e. at 3.3V)
-//
-// We have a 0.8V difference so 4095 * 0.8V / 3.3V is roughly 993
-static const uint32_t altitudeDelta = 993;
-
-// Represents a 0.8V difference on the testing stations.
-// Assuming PE4 pin isn't cut
-//
-// The ADC values we get with the testing stations are much lower than with a
-// power supply, likely because of some voltage drop caused by the Tiva board
-// (Number derived through experimentation with actual testing stations)
-// static const uint32_t altitudeDelta = 412;
-
 //*****************************************************************************
 //
-// The interrupt handler for the for SysTick interrupt.
+// The interrupt handler for the SysTick interrupt.
 //
 //*****************************************************************************
-void
-SysTickIntHandler(void)
+void SysTickIntHandler(void)
 {
     // Poll the buttons
     updateButtons();
@@ -115,27 +73,9 @@ void ADCIntHandler(void)
 	ADCIntClear(ADC0_BASE, 3);
 }
 
-//*****************************************************************************
-// Initialisation functions for the clock (incl. SysTick), ADC, display
-//*****************************************************************************
-void initClock(void)
-{
-    // Set the clock rate to 20 MHz
-    SysCtlClockSet (SYSCTL_SYSDIV_10 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN |
-                   SYSCTL_XTAL_16MHZ);
-    //
-    // Set up the period for the SysTick timer.  The SysTick timer period is
-    // set as a function of the system clock.
-    SysTickPeriodSet(SysCtlClockGet() / SAMPLE_RATE_HZ);
-    //
-    // Register the interrupt handler
-    SysTickIntRegister(SysTickIntHandler);
-    //
-    // Enable interrupt and device
-    SysTickIntEnable();
-    SysTickEnable();
-}
-
+/**
+ * Initialise the ADC peripheral and configuration
+ */
 void initADC(void)
 {
     //
@@ -219,59 +159,16 @@ uint32_t getMeanVal(void)
     // circular buffer and display it, together with the sample number.
     uint32_t sum = 0;
     for (i = 0; i < BUF_SIZE; i++)
-        sum += readCircBuf (&g_inBuffer);
+        sum += readCircBuf(&g_inBuffer);
 
     return (2 * sum + BUF_SIZE) / 2 / BUF_SIZE;
 }
 
-int main(void)
+/*
+ * Initialise altitude module
+ */
+void initAltitude(void)
 {
-	int32_t mean = 0, landedAltitude = 0, altitudePercentage = 0;
-	bool getInitHeight = true;
-	uint8_t state = 0;
-
-	initButtons();
-	initClock();
-	initADC();
-	initDisplay();
-	initCircBuf (&g_inBuffer, BUF_SIZE);
-
-    // Enable interrupts to the processor.
-    IntMasterEnable();
-
-    // Delay by one second to give it enough time to fill up the buffer.
-    // Note that SysCtlDelay runs three instructions per loop so this is
-    // three times longer than necessary - this is for safety reasons.
-    SysCtlDelay(SysCtlClockGet() * BUF_SIZE / SAMPLE_RATE_HZ);
-
-	while (1) {
-	    mean = getMeanVal();
-
-	    if (checkButton(LEFT) == PUSHED) {
-	        getInitHeight = true;
-	    }
-
-	    if (checkButton(UP) == PUSHED) {
-	        if (++state > 2) {
-	            state = 0;
-	        }
-	    }
-
-	    if (getInitHeight) {
-	        landedAltitude = mean;
-	        getInitHeight = false;
-	    }
-
-	    altitudePercentage = (landedAltitude - mean) * 100 / altitudeDelta;
-
-	    // Calculate and display altitude
-	    displayMeanVal (mean, altitudePercentage, state);
-
-	    // Assumes three useless instructions per "count" of the delay, hence
-	    // divide by six and not two
-	    //
-		// SysCtlDelay (SysCtlClockGet() / 6);  // Update display at ~ 2 Hz
-		SysCtlDelay (SysCtlClockGet() / 30);
-	}
+    initADC();
+    initCircBuf(&g_inBuffer, BUF_SIZE);
 }
-
