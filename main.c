@@ -5,6 +5,7 @@
 #include "driverlib/interrupt.h"
 #include "buttons4.h"
 #include "altitude.h"
+#include "yaw.h"
 
 //*****************************************************************************
 // Initialisation functions for the clock (incl. SysTick), ADC, display
@@ -36,6 +37,7 @@ int main(void)
     initButtons();
     initClock();
     initAltitude();
+    initYaw();
     initDisplay();
 
     // Enable interrupts to the processor.
@@ -67,7 +69,9 @@ int main(void)
         altitudePercentage = (landedAltitude - mean) * 100 / ALTITUDE_DELTA;
 
         // Calculate and display altitude
-        displayMeanVal (mean, altitudePercentage, state);
+        displayMeanVal(mean, altitudePercentage, state);
+
+        displayYaw(getYawDirection());
 
         // Assumes three useless instructions per "count" of the delay
         // Hence 10 Hz

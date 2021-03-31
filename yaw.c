@@ -25,72 +25,20 @@
 #include "utils/ustdlib.h"
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "circBufT.h"
+#include "yaw.h"
 
-//*****************************************************************************
-// Constants
-//
-// Yaw Quadrature Encoding:
-// PB0 is the Channel/Phase A pin
-// PB1 is the Channel/Phase B pin
-//*****************************************************************************
-
-/*
- * Yaw configuration
- */
-#define YAW_QUAD_PERIPH_GPIO    SYSCTL_PERIPH_GPIOB
-#define YAW_QUAD_BASE           GPIO_PORTB_BASE
-#define YAW_QUAD_INT_PIN_0      GPIO_INT_PIN_0
-#define YAW_QUAD_PIN_0          GPIO_PIN_0
-#define YAW_QUAD_INT_PIN_1      GPIO_INT_PIN_1
-#define YAW_QUAD_PIN_1          GPIO_PIN_1
-#define YAW_QUAD_SIG_STRENGTH   GPIO_STRENGTH_4MA
-#define YAW_QUAD_PIN_TYPE       GPIO_PIN_TYPE_STD_WPD
-#define YAW_QUAD_EDGE_TYPE      GPIO_BOTH_EDGES
-#define YAW_QUAD_DDR            GPIO_DIR_MODE_IN
-
-#define YAW_TOTAL_NOTCHES       110
-// Yaw angle is measured in number of notches, using
-// quadrature decoding (hence multiply by 4)
-#define YAW_MAX_ANGLE           (YAW_TOTAL_NOTCHES * 4)
-
-// clockwise
-#define QUAD_CW    1
-// counter-clockwise
-#define QUAD_CCW   -1
-// no change
-#define QUAD_NULL  0
-// skipped a state, indicates a problem in the code
-#define QUAD_ERROR 2
-
-int8_t yawDirection = 0;
+static int8_t yawDirection = 0;
+static bool yawOutput[2] = {0};
+static bool prevYawOutput[2] = {0};
 // Yaw angle, measured in number of notches (also see YAW_MAX_ANGLE above)
-int16_t yawAngle = 0;
-bool yawOutput[2] = {0};
-bool prevYawOutput[2] = {0};
+static int16_t yawAngle = 0;
 
-int8_t quadratureLookup[16] = {
+static const int8_t quadratureLookup[16] = {
         QUAD_NULL,  QUAD_CW,    QUAD_CCW,   QUAD_ERROR,
         QUAD_CCW,   QUAD_NULL,  QUAD_ERROR, QUAD_CW,
         QUAD_CW,    QUAD_ERROR, QUAD_NULL,  QUAD_CCW,
         QUAD_ERROR, QUAD_CCW,   QUAD_CW,    QUAD_NULL
 };
-
-// Prototype functions
-void initYaw(void);
-void yawIntHandler(void);
-
-void initClock(void)
-{
-    // Set the clock rate to 20 MHz
-    SysCtlClockSet (SYSCTL_SYSDIV_10 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN |
-                   SYSCTL_XTAL_16MHZ);
-}
-
-void initDisplay(void)
-{
-    // Initialise the Orbit OLED display
-    OLEDInitialise();
-}
 
 void initYaw(void)
 {
@@ -170,25 +118,12 @@ void displayYaw(int8_t yawDirection)
     }
 }
 
-void displayOutput(int32_t a, int32_t b)
+int16_t getYawAngle(void)
 {
-    char string[17];
-    usnprintf(string, sizeof(string), "a = %4d", a);
-    OLEDStringDraw(string, 0, 1);
-
-    usnprintf(string, sizeof(string), "b = %4d", b);
-    OLEDStringDraw(string, 0, 2);
+    return yawAngle;
 }
 
-int main(void)
+int8_t getYawDirection(void)
 {
-    initClock();
-    initYaw();
-    initDisplay();
-
-    while (1) {
-        SysCtlDelay(SysCtlClockGet () / 120);
-        displayYaw(yawDirection);
-        displayOutput(yawOutput[0], yawOutput[1]);
-    }
+    return yawDirection;
 }
