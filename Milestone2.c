@@ -57,9 +57,9 @@
 // skipped a state, indicates a problem in the code
 #define QUAD_ERROR 2
 
-int8_t yaw = 0;
-int8_t aOutput = 0;
-int8_t bOutput = 0;
+int8_t yawDirection = 0;
+bool yawOutput[2] = {0};
+bool prevYawOutput[2] = {0};
 
 int8_t quadratureLookup[16] = {
         QUAD_NULL,  QUAD_CW,    QUAD_CCW,   QUAD_ERROR,
@@ -83,23 +83,6 @@ void initDisplay(void)
 {
     // Initialise the Orbit OLED display
     OLEDInitialise();
-}
-
-void displayYaw(int8_t yaw)
-{
-    char string[17];
-    usnprintf(string, sizeof(string), "Yaw = %4d", yaw);
-    OLEDStringDraw(string, 0, 1);
-}
-
-void displayOutput(int32_t a, int32_t b)
-{
-    char string[17];
-    usnprintf(string, sizeof(string), "a = %4d", a != 0);
-    OLEDStringDraw(string, 0, 1);
-
-    usnprintf(string, sizeof(string), "b = %4d", b != 0);
-    OLEDStringDraw(string, 0, 2);
 }
 
 void initYaw(void)
@@ -135,8 +118,47 @@ void yawIntHandler(void)
     GPIOIntClear(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_0 | YAW_QUAD_INT_PIN_1);
 
     // read A and B
-    aOutput = GPIOPinRead(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_0);
-    bOutput = GPIOPinRead(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_1);
+    prevYawOutput[0] = yawOutput[0];
+    prevYawOutput[1] = yawOutput[1];
+    // will either be 0 or 1
+    yawOutput[0] = GPIOPinRead(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_0) != 0;
+    // will either be 0 or 2 (because of GPIOPinRead implementation)
+    yawOutput[1] = GPIOPinRead(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_1) != 0;
+}
+
+void updateYaw(bool prevYaw[], bool currentYaw[])
+{
+    uint8_t index = (prevYaw[0]<<3) + (prevYaw[1]<<2) +
+            (currentYaw[0]<<1) + (currentYaw[1]);
+    yawDirection = quadratureLookup[index];
+}
+
+void displayYaw(int8_t yawDirection)
+{
+//    char string[17];
+//    usnprintf(string, sizeof(string), "YawDir = %4d", yawDirection);
+//    OLEDStringDraw(string, 0, 0);
+    if (yawDirection == QUAD_CW) {
+        OLEDStringDraw("Yaw ClockWise   ", 0, 0);
+    } else if (yawDirection == QUAD_CCW) {
+        OLEDStringDraw("Yaw CntClockwise", 0, 0);
+    } else if (yawDirection == QUAD_NULL) {
+        OLEDStringDraw("Yaw No Change   ", 0, 0);
+    } else {
+        // indicates a yaw measurement interrupt has been skipped - this
+        // should never happen
+        OLEDStringDraw("Yaw ERROR ERROR ", 0, 0);
+    }
+}
+
+void displayOutput(int32_t a, int32_t b)
+{
+    char string[17];
+    usnprintf(string, sizeof(string), "a = %4d", a);
+    OLEDStringDraw(string, 0, 1);
+
+    usnprintf(string, sizeof(string), "b = %4d", b);
+    OLEDStringDraw(string, 0, 2);
 }
 
 int main(void)
@@ -145,13 +167,10 @@ int main(void)
     initYaw();
     initDisplay();
 
-    OLEDStringDraw("bloh world", 0, 2);
-    OLEDStringDraw("bloh world", 0, 1);
-    OLEDStringDraw("bloh world", 0, 0);
-
     while (1) {
         SysCtlDelay(SysCtlClockGet () / 120);
-        // displayYaw(yaw);
-        displayOutput(aOutput, bOutput);
+        updateYaw(prevYawOutput, yawOutput);
+        displayYaw(yawDirection);
+        displayOutput(yawOutput[0], yawOutput[1]);
     }
 }
