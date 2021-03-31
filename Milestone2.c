@@ -48,6 +48,11 @@
 #define YAW_QUAD_EDGE_TYPE      GPIO_BOTH_EDGES
 #define YAW_QUAD_DDR            GPIO_DIR_MODE_IN
 
+#define YAW_TOTAL_NOTCHES       110
+// Yaw angle is measured in number of notches, using
+// quadrature decoding (hence multiply by 4)
+#define YAW_MAX_ANGLE           (YAW_TOTAL_NOTCHES * 4)
+
 // clockwise
 #define QUAD_CW    1
 // counter-clockwise
@@ -58,6 +63,8 @@
 #define QUAD_ERROR 2
 
 int8_t yawDirection = 0;
+// Yaw angle, measured in number of notches (also see YAW_MAX_ANGLE above)
+int16_t yawAngle = 0;
 bool yawOutput[2] = {0};
 bool prevYawOutput[2] = {0};
 
@@ -112,6 +119,9 @@ void initYaw(void)
     GPIOIntEnable(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_0 | YAW_QUAD_INT_PIN_1);
 }
 
+/**
+ * Handles a change in yaw, i.e. when the yaw angle is changing.
+ */
 void yawIntHandler(void)
 {
     // Clear the interrupt flags for PB0 and PB1
@@ -124,20 +134,29 @@ void yawIntHandler(void)
     yawOutput[0] = GPIOPinRead(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_0) != 0;
     // will either be 0 or 2 (because of GPIOPinRead implementation)
     yawOutput[1] = GPIOPinRead(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_1) != 0;
-}
 
-void updateYaw(bool prevYaw[], bool currentYaw[])
-{
-    uint8_t index = (prevYaw[0]<<3) + (prevYaw[1]<<2) +
-            (currentYaw[0]<<1) + (currentYaw[1]);
+    // Update yaw direction (clockwise, counter-clockwise etc.)
+    uint8_t index = (prevYawOutput[0]<<3) + (prevYawOutput[1]<<2) +
+            (yawOutput[0]<<1) + (yawOutput[1]);
     yawDirection = quadratureLookup[index];
+
+    if (prevYawOutput[0] != yawOutput[0] || prevYawOutput[1] != yawOutput[1] &&
+            yawDirection != QUAD_ERROR) {
+        // Handles negative numbers as long as -YAW_MAX_ANGLE <= yawAngle < infinity
+        //
+        // Note that yawAngle is stored in number of notches, and not in degrees
+        // (to avoid floating point arithmetic)
+        yawAngle = (yawAngle + yawDirection + YAW_MAX_ANGLE) % YAW_MAX_ANGLE;
+    }
 }
 
 void displayYaw(int8_t yawDirection)
 {
-//    char string[17];
-//    usnprintf(string, sizeof(string), "YawDir = %4d", yawDirection);
-//    OLEDStringDraw(string, 0, 0);
+    char string[17];
+    // Note integer division below loses a bit of accuracy and always rounds down
+    usnprintf(string, sizeof(string), "YawAngle = %5d", 360*yawAngle/YAW_MAX_ANGLE);
+    OLEDStringDraw(string, 0, 3);
+
     if (yawDirection == QUAD_CW) {
         OLEDStringDraw("Yaw ClockWise   ", 0, 0);
     } else if (yawDirection == QUAD_CCW) {
@@ -169,7 +188,6 @@ int main(void)
 
     while (1) {
         SysCtlDelay(SysCtlClockGet () / 120);
-        updateYaw(prevYawOutput, yawOutput);
         displayYaw(yawDirection);
         displayOutput(yawOutput[0], yawOutput[1]);
     }
