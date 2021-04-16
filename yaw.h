@@ -31,7 +31,7 @@
 #define YAW_QUAD_EDGE_TYPE      GPIO_BOTH_EDGES
 #define YAW_QUAD_DDR            GPIO_DIR_MODE_IN
 
-#define YAW_TOTAL_NOTCHES       110
+#define YAW_TOTAL_NOTCHES       112
 // Yaw angle is measured in number of notches, using
 // quadrature decoding (hence multiply by 4)
 #define YAW_MAX_ANGLE           (YAW_TOTAL_NOTCHES * 4)

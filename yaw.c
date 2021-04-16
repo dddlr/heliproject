@@ -72,6 +72,9 @@ void initYaw(void)
  */
 void yawIntHandler(void)
 {
+    // Note that the very first reading on startup won't change the yaw angle,
+    // due to there being no previous yaw output to reliably determine direction
+
     // Clear the interrupt flags for PB0 and PB1
     GPIOIntClear(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_0 | YAW_QUAD_INT_PIN_1);
 
@@ -88,7 +91,7 @@ void yawIntHandler(void)
             (yawOutput[0]<<1) + (yawOutput[1]);
     yawDirection = quadratureLookup[index];
 
-    if (prevYawOutput[0] != yawOutput[0] || prevYawOutput[1] != yawOutput[1] &&
+    if ((prevYawOutput[0] != yawOutput[0] || prevYawOutput[1] != yawOutput[1]) &&
             yawDirection != QUAD_ERROR) {
         // Handles negative numbers as long as -YAW_MAX_ANGLE <= yawAngle < infinity
         //
