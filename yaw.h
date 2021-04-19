@@ -7,8 +7,6 @@
  * Author:  Coppy Nawaphanarat (44035285), Grant Wong, Will Archer
  */
 
-#include <stdint.h>
-
 //*****************************************************************************
 // Constants
 //
@@ -48,7 +46,6 @@
 void initYaw(void);
 void readYawOutput(void);
 void yawIntHandler(void);
-void displayYaw(int8_t yawDirection);
 int16_t getYawAngle(void);
 int8_t getYawDirection(void);
 

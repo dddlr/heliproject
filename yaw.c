@@ -13,15 +13,10 @@
 #include <stdbool.h>
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
-#include "driverlib/adc.h"
-#include "driverlib/pwm.h"
 #include "driverlib/gpio.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/systick.h"
 #include "driverlib/interrupt.h"
-#include "driverlib/debug.h"
-#include "utils/ustdlib.h"
-#include "OrbitOLED/OrbitOLEDInterface.h"
 #include "circBufT.h"
 #include "yaw.h"
 
@@ -111,26 +106,6 @@ void yawIntHandler(void)
         // Note that yawAngle is stored in number of notches, and not in degrees
         // (to avoid floating point arithmetic)
         yawAngle = (yawAngle + yawDirection + YAW_MAX_ANGLE) % YAW_MAX_ANGLE;
-    }
-}
-
-void displayYaw(int8_t yawDirection)
-{
-    char string[17];
-    // Note integer division below loses a bit of accuracy and always rounds down
-    usnprintf(string, sizeof(string), "YawAngle = %5d", 360*yawAngle/YAW_MAX_ANGLE);
-    OLEDStringDraw(string, 0, 3);
-
-    if (yawDirection == QUAD_CW) {
-        OLEDStringDraw("Yaw ClockWise   ", 0, 0);
-    } else if (yawDirection == QUAD_CCW) {
-        OLEDStringDraw("Yaw CntClockwise", 0, 0);
-    } else if (yawDirection == QUAD_NULL) {
-        OLEDStringDraw("Yaw No Change   ", 0, 0);
-    } else {
-        // indicates a yaw measurement interrupt has been skipped - this
-        // should never happen
-        OLEDStringDraw("Yaw ERROR ERROR ", 0, 0);
     }
 }
 

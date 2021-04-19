@@ -17,6 +17,7 @@
 #include "buttons4.h"
 #include "altitude.h"
 #include "yaw.h"
+#include "display.h"
 
 //*****************************************************************************
 // Initialisation functions for the clock (incl. SysTick), ADC, display
@@ -26,14 +27,14 @@ void initClock(void)
     // Set the clock rate to 20 MHz
     SysCtlClockSet (SYSCTL_SYSDIV_10 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN |
                    SYSCTL_XTAL_16MHZ);
-    //
+
     // Set up the period for the SysTick timer.  The SysTick timer period is
     // set as a function of the system clock.
     SysTickPeriodSet(SysCtlClockGet() / SAMPLE_RATE_HZ);
-    //
+
     // Register the interrupt handler
     SysTickIntRegister(SysTickIntHandler);
-    //
+
     // Enable interrupt and device
     SysTickIntEnable();
     SysTickEnable();
@@ -79,10 +80,8 @@ int main(void)
 
         altitudePercentage = (landedAltitude - mean) * 100 / ALTITUDE_DELTA;
 
-        // Calculate and display altitude
         displayMeanVal(mean, altitudePercentage, state);
-
-        displayYaw(getYawDirection());
+        displayYaw(getYawAngle(), getYawDirection());
 
         // Assumes three useless instructions per "count" of the delay
         // Hence 10 Hz

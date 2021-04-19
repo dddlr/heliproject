@@ -24,11 +24,6 @@
 // We have a 0.8V difference so 4095 * 0.8V / 3.3V is roughly 993
 #define ALTITUDE_DELTA 993
 
-// Allows switching displaying altitude, mean, and an empty row.
-// STATES_NO is always last and keeps track of the total number of display states.
-enum displayStates {DISPLAY_ALTITUDE, DISPLAY_MEAN, DISPLAY_BLANK, STATES_NO};
-typedef enum displayStates DisplayState;
-
 // The interrupt handler for the SysTick interrupt.
 void SysTickIntHandler(void);
 
@@ -40,9 +35,6 @@ void initClock(void);
 
 // Initialise the ADC peripheral and configuration
 void initADC(void);
-
-// Initialise the Orbit OLED display
-void initDisplay(void);
 
 // Function to display the mean ADc value (10-bit value, note) and sample count.
 void displayMeanVal(int16_t meanval, int32_t altirudePercentage, uint8_t state);

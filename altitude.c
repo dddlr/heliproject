@@ -20,10 +20,7 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/systick.h"
 #include "driverlib/interrupt.h"
-#include "driverlib/debug.h"
-#include "utils/ustdlib.h"
 #include "circBufT.h"
-#include "OrbitOLED/OrbitOLEDInterface.h"
 #include "buttons4.h"
 #include "altitude.h"
 
@@ -33,40 +30,35 @@
 static circBuf_t altitudeBuffer;		// Buffer of size BUF_SIZE integers (sample values)
 static uint32_t sampleCount;	// Counter for the interrupts
 
-//*****************************************************************************
-//
-// The interrupt handler for the SysTick interrupt.
-//
-//*****************************************************************************
+/**
+ * The interrupt handler for the SysTick interrupt.
+ */
 void SysTickIntHandler(void)
 {
     // Poll the buttons
     updateButtons();
-    //
+
     // Initiate a conversion
-    //
     ADCProcessorTrigger(ADC0_BASE, 3); 
     sampleCount++;
 }
 
-//*****************************************************************************
-//
-// The handler for the ADC conversion complete interrupt.
-// Writes to the circular buffer.
-//
-//*****************************************************************************
+/**
+ * The handler for the ADC conversion complete interrupt, used for getting
+ * the altitude. Writes to the altitude circular buffer.
+ */
 void ADCIntHandler(void)
 {
 	uint32_t adcInput;
 	
-	//
+
 	// Get the single sample from ADC0.  ADC_BASE is defined in
 	// inc/hw_memmap.h
 	ADCSequenceDataGet(ADC0_BASE, 3, &adcInput);
-	//
+
 	// Place it in the circular buffer (advancing write index)
 	writeCircBuf (&altitudeBuffer, adcInput);
-	//
+
 	// Clean up, clearing the interrupt
 	ADCIntClear(ADC0_BASE, 3);
 }
@@ -76,7 +68,6 @@ void ADCIntHandler(void)
  */
 void initADC(void)
 {
-    //
     // The ADC0 peripheral must be enabled for configuration and use.
     SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
     
@@ -85,7 +76,6 @@ void initADC(void)
     // conversion.
     ADCSequenceConfigure(ADC0_BASE, 3, ADC_TRIGGER_PROCESSOR, 0);
   
-    //
     // Configure step 0 on sequence 3.  Sample channel 0 (ADC_CTL_CH0) in
     // single-ended mode (default) and configure the interrupt flag
     // (ADC_CTL_IE) to be set when the sample is done.  Tell the ADC logic
@@ -110,43 +100,9 @@ void initADC(void)
     ADCIntEnable(ADC0_BASE, 3);
 }
 
-void initDisplay(void)
-{
-    // Initialise the Orbit OLED display
-    OLEDInitialise ();
-}
-
-//*****************************************************************************
-//
-// Function to display the mean ADC value (10-bit value, note) and sample count.
-//
-//*****************************************************************************
-void displayMeanVal(int16_t meanVal, int32_t altitudePercentage, DisplayState state)
-{
-    // 16 characters across the display
-    // Ensure that resulting string is empty wherever text is not added
-    char string[17];
-    // Form a new string for the line.  The maximum width specified for the
-    //  number field ensures it is displayed right justified.
-
-	// Display the altitude percentage
-	if (state == DISPLAY_ALTITUDE) {
-	    usnprintf(string, sizeof(string), "Alt. = %4d%%", altitudePercentage);
-	// Display the mean ADC value
-	} else if (state == DISPLAY_MEAN) {
-	    usnprintf(string, sizeof(string), "Mean = %5d", meanVal);
-	} else if (state == DISPLAY_BLANK) {
-	    // Don't display any text.
-	    usnprintf(string, sizeof(string), "                ");
-	}
-
-	// Update line on display.
-    OLEDStringDraw(string, 0, 1);
-}
-
-//*****************************************************************************
-// Retrieves the mean value of the buffer contents
-//*****************************************************************************
+/**
+ * Retrieves the mean value of the buffer contents
+ */
 uint32_t getMeanVal(void)
 {
     uint16_t i;
@@ -159,7 +115,7 @@ uint32_t getMeanVal(void)
     return (2 * sum + BUF_SIZE) / 2 / BUF_SIZE;
 }
 
-/*
+/**
  * Initialise altitude module
  */
 void initAltitude(void)
