@@ -121,7 +121,7 @@ void initDisplay(void)
 // Function to display the mean ADC value (10-bit value, note) and sample count.
 //
 //*****************************************************************************
-void displayMeanVal(int16_t meanVal, int32_t altitudePercentage, uint8_t state)
+void displayMeanVal(int16_t meanVal, int32_t altitudePercentage, DisplayState state)
 {
     // 16 characters across the display
     // Ensure that resulting string is empty wherever text is not added
@@ -130,13 +130,13 @@ void displayMeanVal(int16_t meanVal, int32_t altitudePercentage, uint8_t state)
     //  number field ensures it is displayed right justified.
 
 	// Display the altitude percentage
-	if (state == 0) {
+	if (state == DISPLAY_ALTITUDE) {
 	    usnprintf(string, sizeof(string), "Alt. = %4d%%", altitudePercentage);
 	// Display the mean ADC value
-	} else if (state == 1) {
+	} else if (state == DISPLAY_MEAN) {
 	    usnprintf(string, sizeof(string), "Mean = %5d", meanVal);
-	} else {
-	    // If state is 2, don't display any text.
+	} else if (state == DISPLAY_BLANK) {
+	    // Don't display any text.
 	    usnprintf(string, sizeof(string), "                ");
 	}
 

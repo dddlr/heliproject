@@ -43,7 +43,7 @@ int main(void)
 {
     int32_t mean = 0, landedAltitude = 0, altitudePercentage = 0;
     bool getInitHeight = true;
-    uint8_t state = 0;
+    DisplayState state = DISPLAY_ALTITUDE;
 
     initButtons();
     initClock();
@@ -67,8 +67,8 @@ int main(void)
         }
 
         if (checkButton(UP) == PUSHED) {
-            if (++state > 2) {
-                state = 0;
+            if (++state >= STATES_NO) {
+                state = DISPLAY_ALTITUDE;
             }
         }
 
