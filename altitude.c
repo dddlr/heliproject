@@ -32,8 +32,8 @@
 //*****************************************************************************
 // Global variables
 //*****************************************************************************
-static circBuf_t g_inBuffer;		// Buffer of size BUF_SIZE integers (sample values)
-static uint32_t g_ulSampCnt;	// Counter for the interrupts
+static circBuf_t altitudeBuffer;		// Buffer of size BUF_SIZE integers (sample values)
+static uint32_t sampleCount;	// Counter for the interrupts
 
 //*****************************************************************************
 //
@@ -48,7 +48,7 @@ void SysTickIntHandler(void)
     // Initiate a conversion
     //
     ADCProcessorTrigger(ADC0_BASE, 3); 
-    g_ulSampCnt++;
+    sampleCount++;
 }
 
 //*****************************************************************************
@@ -59,15 +59,15 @@ void SysTickIntHandler(void)
 //*****************************************************************************
 void ADCIntHandler(void)
 {
-	uint32_t ulValue;
+	uint32_t adcInput;
 	
 	//
 	// Get the single sample from ADC0.  ADC_BASE is defined in
 	// inc/hw_memmap.h
-	ADCSequenceDataGet(ADC0_BASE, 3, &ulValue);
+	ADCSequenceDataGet(ADC0_BASE, 3, &adcInput);
 	//
 	// Place it in the circular buffer (advancing write index)
-	writeCircBuf (&g_inBuffer, ulValue);
+	writeCircBuf (&altitudeBuffer, adcInput);
 	//
 	// Clean up, clearing the interrupt
 	ADCIntClear(ADC0_BASE, 3);
@@ -159,7 +159,7 @@ uint32_t getMeanVal(void)
     // circular buffer and display it, together with the sample number.
     uint32_t sum = 0;
     for (i = 0; i < BUF_SIZE; i++)
-        sum += readCircBuf(&g_inBuffer);
+        sum += readCircBuf(&altitudeBuffer);
 
     return (2 * sum + BUF_SIZE) / 2 / BUF_SIZE;
 }
@@ -170,5 +170,5 @@ uint32_t getMeanVal(void)
 void initAltitude(void)
 {
     initADC();
-    initCircBuf(&g_inBuffer, BUF_SIZE);
+    initCircBuf(&altitudeBuffer, BUF_SIZE);
 }
