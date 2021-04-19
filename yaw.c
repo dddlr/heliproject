@@ -1,15 +1,13 @@
-/*
- * Milestone2.c - The second milestone task for the helicopter project
- *
- *  Created on: 31/03/2021
- *  Authors: Suwijuk Nawaphanarat (44035285), Grant Wong, Will Archer
- *
- *  Description:
- *  This module contains the second milestone task for the helicopter project.
- *  It is for calculating the yaw values, the slot counts, and initialiser of the
- *  quadrature state machine.
- *
- */
+//*****************************************************************************
+// yaw.c - Functions related to measuring the helicopter yaw angle
+//
+// Author:  Coppy Nawaphanarat, Grant Wong, Will Archer
+//
+//*****************************************************************************
+// Description:
+// Contains functions for initialising the yaw-related pins, calculating the
+// yaw angle, and quadrature decoding.
+//*****************************************************************************
 
 #include <stdint.h>
 #include <stdbool.h>

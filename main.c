@@ -1,3 +1,14 @@
+//*****************************************************************************
+// main.c - Helicopter project
+//
+// Author:  Coppy Nawaphanarat, Grant Wong, Will Archer
+//
+//*****************************************************************************
+// Description:
+// Helicopter project for ENCE361, 2021. Able to measure and display helicopter
+// altitude and yaw angle.
+//*****************************************************************************
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "driverlib/sysctl.h"

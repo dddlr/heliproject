@@ -1,15 +1,13 @@
 //*****************************************************************************
+// altitude.c - Functions related to measuring the helicopter altitude
 //
-// Milestone1.c - The first milestone task of the helicopter project
-//
-// Author:  Coppy Nawaphanarat (44035285), Grant Wong, Will Archer
-// Last modified:	24/03/2021
+// Author:  Coppy Nawaphanarat, Grant Wong, Will Archer
 //
 //*****************************************************************************
 // Description:
-// This module contains the first milestone task of the helicopter project. It is for
-// calculating the mean altitude as a raw value and converts into a percentage
-// of the overall altitude. Both values will be display on the Orbit Board.
+// Initialising the altitude-related pins, measuring samples of the
+// helicopter altitude from ADC, and averaging the values to get a final
+// altitude value as output.
 //*****************************************************************************
 
 #include <stdint.h>
@@ -102,15 +100,12 @@ void initADC(void)
     ADCSequenceStepConfigure(ADC0_BASE, 3, 0, ADC_CTL_CH9 | ADC_CTL_IE |
                              ADC_CTL_END);
 
-    //
     // Since sample sequence 3 is now configured, it must be enabled.
     ADCSequenceEnable(ADC0_BASE, 3);
-  
-    //
+
     // Register the interrupt handler
     ADCIntRegister (ADC0_BASE, 3, ADCIntHandler);
   
-    //
     // Enable interrupts for ADC0 sequence 3 (clears any outstanding interrupts)
     ADCIntEnable(ADC0_BASE, 3);
 }
