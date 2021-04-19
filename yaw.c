@@ -40,6 +40,17 @@ static const int8_t quadratureLookup[16] = {
         QUAD_ERROR, QUAD_CCW,   QUAD_CW,    QUAD_NULL
 };
 
+/**
+ * Reads yaw output.
+ */
+void readYawOutput(void)
+{
+    // will either be 0 or 1
+    yawOutput[0] = GPIOPinRead(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_0) != 0;
+    // will either be 0 or 2 (because of GPIOPinRead implementation)
+    yawOutput[1] = GPIOPinRead(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_1) != 0;
+}
+
 void initYaw(void)
 {
     // setup the pins (PB0 is A, PB1 is B)
@@ -65,6 +76,12 @@ void initYaw(void)
 
     // Enable interrupts on GPIO Port B Pins 0, 1 for yaw channels A and B
     GPIOIntEnable(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_0 | YAW_QUAD_INT_PIN_1);
+
+    // Get initial value of yaw output
+    // (before first yaw interrupt occurs)
+    //
+    // This ensures that the first proper reading is correct
+    readYawOutput();
 }
 
 /**
@@ -81,10 +98,8 @@ void yawIntHandler(void)
     // read A and B
     prevYawOutput[0] = yawOutput[0];
     prevYawOutput[1] = yawOutput[1];
-    // will either be 0 or 1
-    yawOutput[0] = GPIOPinRead(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_0) != 0;
-    // will either be 0 or 2 (because of GPIOPinRead implementation)
-    yawOutput[1] = GPIOPinRead(YAW_QUAD_BASE, YAW_QUAD_INT_PIN_1) != 0;
+
+    readYawOutput();
 
     // Update yaw direction (clockwise, counter-clockwise etc.)
     uint8_t index = (prevYawOutput[0]<<3) + (prevYawOutput[1]<<2) +

@@ -46,6 +46,7 @@
 #define QUAD_ERROR 2
 
 void initYaw(void);
+void readYawOutput(void);
 void yawIntHandler(void);
 void displayYaw(int8_t yawDirection);
 int16_t getYawAngle(void);
