@@ -84,7 +84,7 @@ int main(void)
         displayYaw(getYawAngle(), getYawDirection());
 
         // Assumes three useless instructions per "count" of the delay
-        // Hence 10 Hz
-        SysCtlDelay (SysCtlClockGet() / (3 * 10));
+        // Hence 60 Hz
+        SysCtlDelay (SysCtlClockGet() / (3 * 60));
     }
 }

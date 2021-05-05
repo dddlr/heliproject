@@ -56,6 +56,7 @@ void displayYaw(int16_t yawAngle, int8_t yawDirection)
 {
     char string[17];
     // Note integer division below loses a bit of accuracy and always rounds down
+    // TODO: change angle range to [-180 degrees, 180 degrees]
     usnprintf(string, sizeof(string), "YawAngle = %5d", MAX_ANGLE_DEGS*yawAngle/YAW_MAX_ANGLE);
     OLEDStringDraw(string, 0, 3);
 
