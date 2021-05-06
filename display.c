@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "utils/ustdlib.h"
 #include "OrbitOLED/OrbitOLEDInterface.h"
 #include "utils/ustdlib.h"
@@ -31,7 +32,7 @@
 #define SEND_STATUS_RATE_HZ     4       // Updates the uart display at 4 updates per seconds????
 #define UART_INPUT_BUFFER_SIZE  50      // The size of the string for UART display
 //---USB Serial comms: UART0, Rx:PA0 , Tx:PA1
-#define BAUD_RATE 9600
+#define BAUD_RATE               9600
 #define UART_USB_BASE           UART0_BASE
 #define UART_USB_PERIPH_UART    SYSCTL_PERIPH_UART0
 #define UART_USB_PERIPH_GPIO    SYSCTL_PERIPH_GPIOA
@@ -43,7 +44,7 @@
 //********************************************************
 // Global variables
 //********************************************************
-char statusMessage[UART_INPUT_STR_LEN];
+static char *statusMessage;
 // A boolean that checks if it is ready to send the helicopter's status
 volatile bool sendStatus = false;
 
@@ -60,6 +61,7 @@ void initDisplay(void)
  */
 void initUART(void)
 {
+    statusMessage = malloc(UART_INPUT_BUFFER_SIZE * sizeof(char));
     //
     // Enable GPIO port A which is used for UART0 pins.
     //
