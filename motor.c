@@ -12,10 +12,10 @@
 #include <stdbool.h>
 #include "motor.h"
 
-static uint8_t mainPWMDuty = 50;
-static uint8_t tailPWMDuty = 50;
+static uint8_t mainPWMDuty = PWM_START_DUTY;
+static uint8_t tailPWMDuty = PWM_START_DUTY;
 
-uint8_t getPWM(Rotor rotor)
+uint8_t getPWMDuty(Rotor rotor)
 {
     if (rotor == ROTOR_MAIN) {
         return mainPWMDuty;
@@ -24,19 +24,16 @@ uint8_t getPWM(Rotor rotor)
     }
 }
 
-void setPWM(uint32_t freq, uint32_t duty, Rotor rotor)
+void setPWMDuty(uint32_t duty, Rotor rotor)
 {
-    // Calculate the PWM period corresponding to the freq.
-    uint32_t period = SysCtlClockGet() / PWM_DIVIDER / freq;
+    uint32_t period = SysCtlClockGet() / PWM_DIVIDER / PWM_START_RATE_HZ;
 
     if (rotor == ROTOR_MAIN) {
         mainPWMDuty = duty;
-        PWMGenPeriodSet(PWM_MAIN_BASE, PWM_MAIN_GEN, period);
         PWMPulseWidthSet(PWM_MAIN_BASE, PWM_MAIN_OUTNUM,
             period * duty / 100);
     } else {
         tailPWMDuty = duty;
-        PWMGenPeriodSet(PWM_TAIL_BASE, PWM_TAIL_GEN, period);
         PWMPulseWidthSet(PWM_TAIL_BASE, PWM_TAIL_OUTNUM,
             period * duty / 100);
     }
@@ -44,6 +41,8 @@ void setPWM(uint32_t freq, uint32_t duty, Rotor rotor)
 
 void initMainPWM(void)
 {
+    uint32_t period = SysCtlClockGet() / PWM_DIVIDER / PWM_START_RATE_HZ;
+
     SysCtlPeripheralEnable(PWM_MAIN_PERIPH_PWM);
     SysCtlPeripheralEnable(PWM_MAIN_PERIPH_GPIO);
 
@@ -54,8 +53,10 @@ void initMainPWM(void)
     PWMGenConfigure(PWM_MAIN_BASE, PWM_MAIN_GEN,
                     PWM_GEN_MODE_UP_DOWN | PWM_GEN_MODE_NO_SYNC);
 
+    PWMGenPeriodSet(PWM_MAIN_BASE, PWM_MAIN_GEN, period);
+
     // Set the initial PWM parameters
-    setPWM(PWM_START_RATE_HZ, PWM_START_DUTY, ROTOR_MAIN);
+    setPWMDuty(PWM_START_DUTY, ROTOR_MAIN);
 
     PWMGenEnable(PWM_MAIN_BASE, PWM_MAIN_GEN);
 
@@ -65,6 +66,8 @@ void initMainPWM(void)
 
 void initTailPWM(void)
 {
+    uint32_t period = SysCtlClockGet() / PWM_DIVIDER / PWM_START_RATE_HZ;
+
     SysCtlPeripheralEnable(PWM_TAIL_PERIPH_PWM);
     SysCtlPeripheralEnable(PWM_TAIL_PERIPH_GPIO);
 
@@ -74,7 +77,9 @@ void initTailPWM(void)
 
     PWMGenConfigure(PWM_TAIL_BASE, PWM_TAIL_GEN, PWM_GEN_MODE_UP_DOWN | PWM_GEN_MODE_NO_SYNC);
 
-    setPWM(PWM_START_RATE_HZ, PWM_START_DUTY, ROTOR_TAIL);
+    PWMGenPeriodSet(PWM_TAIL_BASE, PWM_TAIL_GEN, period);
+
+    setPWMDuty(PWM_START_DUTY, ROTOR_TAIL);
 
     PWMGenEnable(PWM_TAIL_BASE, PWM_TAIL_GEN);
     PWMOutputState(PWM_TAIL_BASE, PWM_TAIL_OUTBIT, false);

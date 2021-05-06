@@ -18,12 +18,11 @@
 #define SYSTICK_RATE_HZ    100
 
 // PWM configuration
-// TODO: set START_RATE_HZ and START_DUTY to something more sensible
 #define PWM_START_RATE_HZ  250
 #define PWM_RATE_STEP_HZ   50
 #define PWM_RATE_MIN_HZ    50
 #define PWM_RATE_MAX_HZ    400
-#define PWM_START_DUTY     50
+#define PWM_START_DUTY     5
 #define PWM_DUTY_STEP      5
 #define PWM_DUTY_MAX       95
 #define PWM_DUTY_MIN       5
@@ -64,8 +63,8 @@
 
 typedef enum {ROTOR_MAIN, ROTOR_TAIL} Rotor;
 
-uint8_t getPWM(Rotor rotor);
-void setPWM(uint32_t ui32Freq, uint32_t ui32Duty, Rotor rotor);
+uint8_t getPWMDuty(Rotor rotor);
+void setPWMDuty(uint32_t ui32Duty, Rotor rotor);
 
 void initMainPWM(void);
 void initTailPWM(void);

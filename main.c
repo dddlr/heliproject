@@ -86,7 +86,7 @@ int main(void)
         displayMeanVal(mean, altitudePercentage, state);
         displayYaw(getYawAngle(), getYawDirection());
         displayUART(altitudePercentage, getYawAngle());
-        displayRotorPWM(getPWM(ROTOR_MAIN), getPWM(ROTOR_TAIL));
+        displayRotorPWM(getPWMDuty(ROTOR_MAIN), getPWMDuty(ROTOR_TAIL));
 
         // Assumes three useless instructions per "count" of the delay
         // Hence 60 Hz
