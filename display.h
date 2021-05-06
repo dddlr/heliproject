@@ -30,8 +30,4 @@ void displayMeanVal(int16_t meanVal, int32_t altitudePercentage, DisplayState st
 
 void displayYaw(int16_t yawAngle, int8_t yawDirection);
 
-bool getSendStatus(void);
-
-void setSendStatusToFalse(void);
-
 #endif /* DISPLAY_H_ */

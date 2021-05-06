@@ -154,11 +154,3 @@ void displayYaw(int16_t yawAngle, int8_t yawDirection)
         OLEDStringDraw("Yaw ERROR ERROR ", 0, 0);
     }
 }
-
-bool getSendStatus(void) {
-    return sendStatus;
-}
-
-void setSendStatusToFalse(void) {
-    sendStatus = false;
-}
