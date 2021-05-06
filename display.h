@@ -30,4 +30,6 @@ void displayMeanVal(int16_t meanVal, int32_t altitudePercentage, DisplayState st
 
 void displayYaw(int16_t yawAngle, int8_t yawDirection);
 
+void displayRotorPWM(uint8_t mainPWMDuty, uint8_t tailPWMDuty);
+
 #endif /* DISPLAY_H_ */

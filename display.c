@@ -130,7 +130,7 @@ void displayMeanVal(int16_t meanVal, int32_t altitudePercentage, DisplayState st
     }
 
     // Update line on display.
-    OLEDStringDraw(string, 0, 1);
+    OLEDStringDraw(string, 0, 0);
 }
 
 /**
@@ -142,17 +142,15 @@ void displayYaw(int16_t yawAngle, int8_t yawDirection)
     // Note integer division below loses a bit of accuracy and always rounds down
     // TODO: change angle range to [-180 degrees, 180 degrees]
     usnprintf(string, sizeof(string), "YawAngle = %5d", MAX_ANGLE_DEGS*yawAngle/YAW_MAX_ANGLE);
-    OLEDStringDraw(string, 0, 3);
+    OLEDStringDraw(string, 0, 1);
+}
 
-    if (yawDirection == QUAD_CW) {
-        OLEDStringDraw("Yaw ClockWise   ", 0, 0);
-    } else if (yawDirection == QUAD_CCW) {
-        OLEDStringDraw("Yaw CntClockwise", 0, 0);
-    } else if (yawDirection == QUAD_NULL) {
-        OLEDStringDraw("Yaw No Change   ", 0, 0);
-    } else {
-        // indicates a yaw measurement interrupt has been skipped - this
-        // should never happen
-        OLEDStringDraw("Yaw ERROR ERROR ", 0, 0);
-    }
+void displayRotorPWM(uint8_t mainPWMDuty, uint8_t tailPWMDuty)
+{
+    char string[17];
+    usnprintf(string, sizeof(string), "MainMotor = %3d%%", mainPWMDuty);
+    OLEDStringDraw(string, 0, 2);
+
+    usnprintf(string, sizeof(string), "TailMotor = %3d%%", tailPWMDuty);
+    OLEDStringDraw(string, 0, 3);
 }
