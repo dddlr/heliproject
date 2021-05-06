@@ -18,8 +18,20 @@ typedef enum displayStates DisplayState;
 
 void initDisplay(void);
 
+void initUART(void);
+
+void uartIntHandler(void);
+
+void UARTSend(char *statusMessage);
+
+void displayUART(int32_t altitude, int16_t yaw);
+
 void displayMeanVal(int16_t meanVal, int32_t altitudePercentage, DisplayState state);
 
 void displayYaw(int16_t yawAngle, int8_t yawDirection);
+
+bool getSendStatus(void);
+
+void setSendStatusToFalse(void);
 
 #endif /* DISPLAY_H_ */

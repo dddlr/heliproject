@@ -51,6 +51,7 @@ int main(void)
     initAltitude();
     initYaw();
     initDisplay();
+    initUART();
 
     // Enable interrupts to the processor.
     IntMasterEnable();
@@ -82,6 +83,7 @@ int main(void)
 
         displayMeanVal(mean, altitudePercentage, state);
         displayYaw(getYawAngle(), getYawDirection());
+        displayUART(altitudePercentage, getYawAngle());
 
         // Assumes three useless instructions per "count" of the delay
         // Hence 60 Hz
