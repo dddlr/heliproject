@@ -20,7 +20,7 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/systick.h"
 #include "inc/hw_memmap.h"
-#include "buttons4.h"
+#include "buttonsAPI.h"
 #include "display.h"
 #include "yaw.h"
 

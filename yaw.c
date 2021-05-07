@@ -1,5 +1,6 @@
 //*****************************************************************************
-// yaw.c - Functions related to measuring the helicopter yaw angle
+// yaw.c - Functions related to measuring the actual helicopter yaw angle
+// (not the desired helicopter yaw angle)
 //
 // Author:  Coppy Nawaphanarat, Grant Wong, Will Archer
 //

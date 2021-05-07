@@ -1,15 +1,15 @@
-#ifndef BUTTONS_H_
-#define BUTTONS_H_
+#ifndef BUTTONS_API_H_
+#define BUTTONS_API_H_
 
 // *******************************************************
-// buttons4.h
+// buttonsAPI.h
 //
 // Support for a set of FOUR specific buttons on the Tiva/Orbit.
 // ENCE361 sample code.
 // The buttons are:  UP and DOWN (on the Orbit daughterboard) plus
 // LEFT and RIGHT on the Tiva.
 //
-// P.J. Bones UCECE
+// Code from buttons4.h, written by P.J. Bones UCECE.
 // Last modified:  7.2.2018
 // 
 // *******************************************************
@@ -22,6 +22,7 @@
 //*****************************************************************************
 enum butNames {UP = 0, DOWN, LEFT, RIGHT, NUM_BUTS};
 enum butStates {RELEASED = 0, PUSHED, NO_CHANGE};
+typedef enum butNames whatButton;
 // UP button
 #define UP_BUT_PERIPH  SYSCTL_PERIPH_GPIOE
 #define UP_BUT_PORT_BASE  GPIO_PORTE_BASE
@@ -70,5 +71,10 @@ updateButtons (void);
 // enumeration butStates, excluding 'NUM_BUTS'. Safe under interrupt.
 uint8_t
 checkButton (uint8_t butName);
+
+/**
+ * Check what button is being pushed
+ */
+whatButton checkWhatButton();
 
 #endif /*BUTTONS_H_*/

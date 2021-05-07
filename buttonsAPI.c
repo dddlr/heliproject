@@ -1,6 +1,6 @@
 // *******************************************************
 // 
-// buttons4.c
+// buttonsAPI.c
 //
 // Support for a set of FOUR specific buttons on the Tiva/Orbit.
 // ENCE361 sample code.
@@ -10,11 +10,12 @@
 // Note that pin PF0 (the pin for the RIGHT pushbutton - SW2 on
 //  the Tiva board) needs special treatment - See PhilsNotesOnTiva.rtf.
 //
-// P.J. Bones UCECE
+// Code from buttons4.c, written by P.J. Bones UCECE.
 // Last modified:  7.2.2018
 // 
 // *******************************************************
 
+#include <buttonsAPI.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "inc/hw_memmap.h"
@@ -23,7 +24,6 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/debug.h"
 #include "inc/tm4c123gh6pm.h"  // Board specific defines (for PF0)
-#include "buttons4.h"
 
 
 // *******************************************************
@@ -37,8 +37,7 @@ static bool but_normal[NUM_BUTS];   // Corresponds to the electrical state
 // *******************************************************
 // initButtons: Initialise the variables associated with the set of buttons
 // defined by the constants in the buttons2.h header file.
-void
-initButtons (void)
+void initButtons(void)
 {
 	int i;
 
@@ -74,8 +73,7 @@ initButtons (void)
        GPIO_PIN_TYPE_STD_WPU);
     but_normal[RIGHT] = RIGHT_BUT_NORMAL;
 
-	for (i = 0; i < NUM_BUTS; i++)
-	{
+	for (i = 0; i < NUM_BUTS; i++) {
 		but_state[i] = but_normal[i];
 		but_count[i] = 0;
 		but_flag[i] = false;
@@ -91,8 +89,7 @@ initButtons (void)
 // A state change occurs only after NUM_BUT_POLLS consecutive polls have
 // read the pin in the opposite condition, before the state changes and
 // a flag is set.  Set NUM_BUT_POLLS according to the polling rate.
-void
-updateButtons (void)
+void updateButtons (void)
 {
 	bool but_value[NUM_BUTS];
 	int i;
@@ -124,8 +121,7 @@ updateButtons (void)
 // checkButton: Function returns the new button logical state if the button
 // logical state (PUSHED or RELEASED) has changed since the last call,
 // otherwise returns NO_CHANGE.
-uint8_t
-checkButton (uint8_t butName)
+uint8_t checkButton (uint8_t butName)
 {
 	if (but_flag[butName])
 	{
@@ -138,3 +134,17 @@ checkButton (uint8_t butName)
 	return NO_CHANGE;
 }
 
+/**
+ * Check what button is being pushed
+ */
+uint8_t checkWhatButton()
+{
+    int i;
+
+    for (i = 0; i < NUM_BUTS; i++) {
+        if (checkButton(i) == PUSHED) {
+            return i;
+        }
+    }
+    return NUM_BUTS;
+}

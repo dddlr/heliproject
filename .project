@@ -26,16 +26,6 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>buttons4.c</name>
-			<type>1</type>
-			<locationURI>copy_PARENT/Lab2/buttons4.c</locationURI>
-		</link>
-		<link>
-			<name>buttons4.h</name>
-			<type>1</type>
-			<locationURI>copy_PARENT/Lab2/buttons4.h</locationURI>
-		</link>
-		<link>
 			<name>ustdlib.c</name>
 			<type>1</type>
 			<location>C:/ti/TivaWare_C_Series-2.2.0.295/utils/ustdlib.c</location>

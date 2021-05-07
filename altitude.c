@@ -1,5 +1,6 @@
 //*****************************************************************************
-// altitude.c - Functions related to measuring the helicopter altitude
+// altitude.c - Functions related to measuring the actual helicopter altitude
+// (not desired altitude)
 //
 // Author:  Coppy Nawaphanarat, Grant Wong, Will Archer
 //
@@ -21,7 +22,7 @@
 #include "driverlib/systick.h"
 #include "driverlib/interrupt.h"
 #include "circBufT.h"
-#include "buttons4.h"
+#include "buttonsAPI.h"
 #include "altitude.h"
 
 //*****************************************************************************

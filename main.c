@@ -9,16 +9,17 @@
 // altitude and yaw angle.
 //*****************************************************************************
 
+#include <buttonsAPI.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "driverlib/sysctl.h"
 #include "driverlib/systick.h"
 #include "driverlib/interrupt.h"
-#include "buttons4.h"
 #include "altitude.h"
 #include "yaw.h"
 #include "display.h"
 #include "motor.h"
+#include "control.h"
 
 //*****************************************************************************
 // Initialisation functions for the clock (incl. SysTick), ADC, display
@@ -46,6 +47,7 @@ int main(void)
     int32_t mean = 0, landedAltitude = 0, altitudePercentage = 0;
     bool getInitHeight = true;
     DisplayState state = DISPLAY_ALTITUDE;
+    ButtonState button = NOCHANGE;
 
     initButtons();
     initClock();
@@ -81,6 +83,7 @@ int main(void)
             getInitHeight = false;
         }
 
+        //Function
         altitudePercentage = (landedAltitude - mean) * 100 / ALTITUDE_DELTA;
 
         displayMeanVal(mean, altitudePercentage, state);
