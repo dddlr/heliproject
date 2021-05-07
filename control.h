@@ -7,6 +7,6 @@
  * Author: Coppy Nawaphanarat (44035285), Grant Wong, Will Archer
  */
 
-
+void pidControl(Instant* previous, Instant* current, PID constants);
 
 #endif /* CONTROL_H_ */
