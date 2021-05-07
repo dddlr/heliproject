@@ -14,7 +14,6 @@
 #include <stdlib.h>
 #include "utils/ustdlib.h"
 #include "OrbitOLED/OrbitOLEDInterface.h"
-#include "utils/ustdlib.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/gpio.h"
 #include "driverlib/uart.h"
@@ -139,9 +138,14 @@ void displayMeanVal(int16_t meanVal, int32_t altitudePercentage, DisplayState st
 void displayYaw(int16_t yawAngle, int8_t yawDirection)
 {
     char string[17];
-    // Note integer division below loses a bit of accuracy and always rounds down
-    // TODO: change angle range to [-180 degrees, 180 degrees]
-    usnprintf(string, sizeof(string), "YawAngle = %5d", MAX_ANGLE_DEGS*yawAngle/YAW_MAX_ANGLE);
+    // Convert from number of notches to degrees (rounding down)
+    int8_t angle = MAX_ANGLE_DEGS * yawAngle / YAW_MAX_ANGLE;
+    // Change angle range to [-180 degrees, 180 degrees]
+    if (angle > MAX_ANGLE_DEGS / 2) {
+        angle -= MAX_ANGLE_DEGS;
+    }
+
+    usnprintf(string, sizeof(string), "YawAngle = %5d", angle);
     OLEDStringDraw(string, 0, 1);
 }
 
