@@ -34,6 +34,11 @@ static uint8_t but_count[NUM_BUTS];
 static bool but_flag[NUM_BUTS];
 static bool but_normal[NUM_BUTS];   // Corresponds to the electrical state
 
+void buttonIntHandler(void)
+{
+    updateButtons();
+}
+
 // *******************************************************
 // initButtons: Initialise the variables associated with the set of buttons
 // defined by the constants in the buttons2.h header file.
@@ -89,7 +94,7 @@ void initButtons(void)
 // A state change occurs only after NUM_BUT_POLLS consecutive polls have
 // read the pin in the opposite condition, before the state changes and
 // a flag is set.  Set NUM_BUT_POLLS according to the polling rate.
-void updateButtons (void)
+void updateButtons(void)
 {
 	bool but_value[NUM_BUTS];
 	int i;

@@ -21,9 +21,6 @@
 #include "motor.h"
 #include "control.h"
 
-//*****************************************************************************
-// Initialisation functions for the clock (incl. SysTick), ADC, display
-//*****************************************************************************
 void initClock(void)
 {
     // Set the clock rate to 20 MHz
@@ -34,7 +31,7 @@ void initClock(void)
     // set as a function of the system clock.
     SysTickPeriodSet(SysCtlClockGet() / SAMPLE_RATE_HZ);
 
-    // Register the interrupt handler
+    SysTickIntRegister(updateButtons);
     SysTickIntRegister(SysTickIntHandler);
 
     // Enable interrupt and device
@@ -44,10 +41,13 @@ void initClock(void)
 
 int main(void)
 {
-    int32_t mean = 0, landedAltitude = 0, altitudePercentage = 0;
-    bool getInitHeight = true;
+    int32_t rawMeasuredAltitude = 0, rawLandedAltitude = 0;
+    int32_t measuredAltitude = 0, measuredYaw = 0;
+    int32_t desiredAltitude = 0, desiredYaw = 0;
+    whatButton button = NUM_BUTS;
+
+    bool gotInitHeight = true;
     DisplayState state = DISPLAY_ALTITUDE;
-    ButtonState button = NOCHANGE;
 
     initButtons();
     initClock();
@@ -56,6 +56,7 @@ int main(void)
     initDisplay();
     initUART();
     initPWM();
+    initPID();
 
     // Enable interrupts to the processor.
     IntMasterEnable();
@@ -66,30 +67,63 @@ int main(void)
     SysCtlDelay(SysCtlClockGet() * BUF_SIZE / SAMPLE_RATE_HZ);
 
     while (1) {
-        mean = getMeanVal();
+        rawMeasuredAltitude = getMeanVal();
 
-        if (checkButton(LEFT) == PUSHED) {
-            getInitHeight = true;
+        // Milestone 1 code, TODO delete later
+
+//        if (checkButton(LEFT) == PUSHED) {
+//            gotInitHeight = true;
+//        }
+//
+//        if (checkButton(UP) == PUSHED) {
+//            if (++state >= STATES_NO) {
+//                state = DISPLAY_ALTITUDE;
+//            }
+//        }
+//
+//        if (getInitHeight) {
+//            rawLandedAltitude = rawMeasuredAltitude;
+//            gotInitHeight = false;
+//        }
+
+        //
+        // Update desired altitude and yaw
+        //
+
+        button = checkWhatButton();
+
+        switch (button) {
+        case LEFT:
+            desiredYaw = (desiredYaw - 15 + 360) % 360;
+            break;
+
+        case RIGHT:
+            desiredYaw = (desiredYaw + 15 + 360) % 360;
+            break;
+
+        case UP:
+            desiredAltitude += 10;
+            if (desiredAltitude > 100) desiredAltitude = 100;
+            break;
+
+        case DOWN:
+            desiredAltitude -= 10;
+            if (desiredAltitude < 0) desiredAltitude = 0;
+            break;
         }
 
-        if (checkButton(UP) == PUSHED) {
-            if (++state >= STATES_NO) {
-                state = DISPLAY_ALTITUDE;
-            }
-        }
 
-        if (getInitHeight) {
-            landedAltitude = mean;
-            getInitHeight = false;
-        }
+        measuredAltitude = (rawLandedAltitude - rawMeasuredAltitude) * 100 / ALTITUDE_DELTA;
 
-        //Function
-        altitudePercentage = (landedAltitude - mean) * 100 / ALTITUDE_DELTA;
-
-        displayMeanVal(mean, altitudePercentage, state);
+        displayMeanVal(rawMeasuredAltitude, measuredAltitude, state);
         displayYaw(getYawAngle(), getYawDirection());
-        displayUART(altitudePercentage, getYawAngle());
+        displayUART(measuredAltitude, getYawAngle());
         displayRotorPWM(getPWMDuty(ROTOR_MAIN), getPWMDuty(ROTOR_TAIL));
+
+        // TODO: Implement timer scheduler (or equivalent) and have pidControl run
+        // at 50 Hz
+        pidControl(measuredAltitude, desiredAltitude, ALTITUDE, ROTOR_MAIN);
+        pidControl(measuredYaw, desiredYaw, YAW, ROTOR_TAIL);
 
         // Assumes three useless instructions per "count" of the delay
         // Hence 60 Hz

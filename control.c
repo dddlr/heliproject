@@ -19,20 +19,6 @@
 #include "motor.h"
 #include "control.h"
 
-typedef struct {
-    float proportionalGain;
-    float integralGain;
-    float derivativeGain = 0;
-} PID;
-
-typedef struct {
-    float measuredValue;
-    float desiredValue;
-    float errorIntegral = 0;
-
-    float error = 0;
-} Instant;
-
 static PID altitudePID;
 static PID yawPID;
 
@@ -41,40 +27,48 @@ static Instant currentAltitude;
 static Instant prevYaw;
 static Instant currentYaw;
 
-
-void buttonIntHandler(void)
-{
-    updateButtons();
-}
-
-void initClock(void)
-{
-    SysCtlClockSet(SYSCTL_SYSDIV_10 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
-    SysTickPeriodSet(SysCtlClockGet() / 100);
-    SysTickIntRegister(buttonIntHandler);
-
-    // Enable interrupt and device
-    SysTickIntEnable();
-    SysTickEnable();
-}
-
 void initPID(void)
 {
-    // TODO: initialise global variables
+    // TODO: initialise to something more sensible
+    altitudePID.proportionalGain = 1;
+    altitudePID.integralGain = 1;
+    altitudePID.derivativeGain = 1;
 }
 
-void pidControl(Instant* previous, Instant* current, PID constants)
+// void pidControl(Instant* previous, Instant* current, PID constants)
+void pidControl(uint32_t measuredValue, uint32_t desiredValue, PIDInput pidInput, Rotor rotor)
 {
+    Instant* previous;
+    Instant* current;
+    PID* constants;
     int32_t control = 0;
-    current->error = current->desiredValue - current->measuredValue;
-    float proportional = constants.proportionalGain * current->error;
-    // Integral error
-    //
-    // Uses trapezoidal rule
-    current->errorIntegral += PID_FREQUENCY *
+
+    if (pidInput == ALTITUDE) {
+        previous = &prevAltitude;
+        current = &currentAltitude;
+        constants = &altitudePID;
+    } else {
+        previous = &prevYaw;
+        current = &currentYaw;
+        constants = &yawPID;
+    }
+
+    previous->measuredValue = current->measuredValue;
+    previous->desiredValue = current->desiredValue;
+    previous->errorIntegral = current->errorIntegral;
+
+    current->measuredValue = measuredValue;
+    current->desiredValue = desiredValue;
+    current->error = measuredValue - desiredValue;
+
+    float proportional = constants->proportionalGain * current->error;
+
+    // Integral error (uses trapezoidal rule)
+    current->errorIntegral = previous->errorIntegral +
+            1.0/(PID_FREQUENCY) *
             (current->measuredValue + previous->measuredValue) / 2;
 
-    float integral = constants.integralGain * current->errorIntegral;
+    float integral = constants->integralGain * current->errorIntegral;
 
     float differential = (current->error - previous->error) / PID_FREQUENCY;
 
@@ -88,52 +82,7 @@ void pidControl(Instant* previous, Instant* current, PID constants)
         control = 2;
     }
 
-    setPWMDuty(control, ROTOR_MAIN);
-
-    previous->measuredValue = current->measuredValue;
-    previous->desiredValue = current->desiredValue;
-    previous->errorIntegral = current->errorIntegral;
+    setPWMDuty(control, rotor);
 
     // Set new value of `current` outside of this function
-}
-
-int main(void)
-{
-    int32_t yaw = 0, alt = 0;
-    whatButton button = NUM_BUTS;
-
-    char string[17];
-
-    initClock();
-    initButtons();
-    OLEDInitialise();
-
-    while (1) {
-        button = checkWhatButton();
-
-        switch (button) {
-        case LEFT:
-            yaw = (yaw - 15 + 360) % 360;
-            break;
-
-        case RIGHT:
-            yaw = (yaw + 15 + 360) % 360;
-            break;
-
-        case UP:
-            alt += 10;
-            if (alt > 100) alt = 100;
-            break;
-
-        case DOWN:
-            alt -= 10;
-            if (alt < 0) alt = 0;
-            break;
-        }
-
-        usnprintf(string, sizeof(string), "Alt. = %4d%%", alt);
-        OLEDStringDraw(string, 0, 0);
-        usnprintf(string, sizeof(string), "Yaw = %4d", yaw);
-        OLEDStringDraw(string, 0, 1);
-    }
 }
