@@ -24,10 +24,12 @@
 #include "display.h"
 #include "yaw.h"
 
+//DEBUG
+#include "control.h"
+
 //********************************************************
 // Constants
 //********************************************************
-#define SYSTICK_RATE_HZ         64
 #define SEND_STATUS_RATE_HZ     4       // Updates the uart display at 4 updates per seconds????
 #define UART_INPUT_BUFFER_SIZE  50      // The size of the string for UART display
 //---USB Serial comms: UART0, Rx:PA0 , Tx:PA1
@@ -96,13 +98,17 @@ void UARTSend(char *statusMessage)
 /**
  * Displays the helicopter's status message on UART
  */
-void displayUART(int32_t altitude, int16_t yaw)
+void displayUART(int32_t measuredAltitude, int16_t measuredYaw, int32_t desiredAltitude, int16_t desiredYaw)
 {
     //TODO: Implement Duty cycle and Mode
 
-    yaw = MAX_ANGLE_DEGS*yaw/YAW_MAX_ANGLE;     // Getting the actual yaw degrees
+    measuredYaw = MAX_ANGLE_DEGS * measuredYaw / YAW_MAX_ANGLE;     // Getting the actual yaw degrees
 
-    usprintf(statusMessage, "---------- \r\n Yaw:  %3d | \r\n Alt.: %3d |\r\n ----------\r\n", yaw, altitude);
+    usprintf(statusMessage,
+             "---------- \r\n Yaw: %3d [%3d] | Alt: %3d%% [%3d%%] \r\n Control: main %3d%% / tail %3d%% \r\n",
+             measuredYaw, desiredYaw, measuredAltitude, desiredAltitude,
+             getMainControl(), getTailControl());
+
     UARTSend(statusMessage);
 }
 

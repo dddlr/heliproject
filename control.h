@@ -7,6 +7,7 @@
  * Author: Coppy Nawaphanarat (44035285), Grant Wong, Will Archer
  */
 
+#include "motor.h"
 typedef enum pidInput {ALTITUDE, YAW} PIDInput;
 
 typedef struct {
@@ -26,8 +27,14 @@ typedef struct {
 void initPID(void);
 
 // void pidControl(Instant* previous, Instant* current, PID constants);
-void pidControl(uint32_t measuredValue, uint32_t desiredValue, PIDInput pidInput, Rotor rotor);
+void pidControl(int32_t measuredValue, int32_t desiredValue, PIDInput pidInput, Rotor rotor);
 
-#define PID_FREQUENCY 50.0
+int32_t getMainControl(void);
+int32_t getTailControl(void);
+
+#define PID_FREQUENCY 120.0
+// TODO: add max control for yaw as well (70%)
+#define MAX_CONTROL 80
+#define MIN_CONTROL 40
 
 #endif /* CONTROL_H_ */

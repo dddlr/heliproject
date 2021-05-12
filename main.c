@@ -42,8 +42,8 @@ void initClock(void)
 int main(void)
 {
     int32_t rawMeasuredAltitude = 0, rawLandedAltitude = 0;
-    int32_t measuredAltitude = 0, measuredYaw = 0;
-    int32_t desiredAltitude = 0, desiredYaw = 0;
+    int32_t measuredAltitude = 0, desiredAltitude = 0, rawDesiredAltitude = 0;
+    int16_t measuredYaw = 0, desiredYaw = 0;
     whatButton button = NUM_BUTS;
 
     bool gotInitHeight = true;
@@ -66,8 +66,12 @@ int main(void)
     // three times longer than necessary - this is for safety reasons.
     SysCtlDelay(SysCtlClockGet() * BUF_SIZE / SAMPLE_RATE_HZ);
 
+    // TODO replace with actual scheduler
+    int8_t i = 0;
+
     while (1) {
         rawMeasuredAltitude = getMeanVal();
+        measuredYaw = getYawAngle();
 
         // Milestone 1 code, TODO delete later
 
@@ -80,11 +84,11 @@ int main(void)
 //                state = DISPLAY_ALTITUDE;
 //            }
 //        }
-//
-//        if (getInitHeight) {
-//            rawLandedAltitude = rawMeasuredAltitude;
-//            gotInitHeight = false;
-//        }
+
+        if (gotInitHeight) {
+            rawLandedAltitude = rawMeasuredAltitude;
+            gotInitHeight = false;
+        }
 
         //
         // Update desired altitude and yaw
@@ -117,16 +121,24 @@ int main(void)
 
         displayMeanVal(rawMeasuredAltitude, measuredAltitude, state);
         displayYaw(getYawAngle(), getYawDirection());
-        displayUART(measuredAltitude, getYawAngle());
+
+        // Should run roughly four times every second
+//        if (i % 20/4 == 0) {
+            displayUART(measuredAltitude, measuredYaw, desiredAltitude, desiredYaw);
+//        }
+
         displayRotorPWM(getPWMDuty(ROTOR_MAIN), getPWMDuty(ROTOR_TAIL));
 
         // TODO: Implement timer scheduler (or equivalent) and have pidControl run
         // at 50 Hz
-        pidControl(measuredAltitude, desiredAltitude, ALTITUDE, ROTOR_MAIN);
+        rawDesiredAltitude = rawLandedAltitude - (desiredAltitude) * ALTITUDE_DELTA/100;
+        pidControl(rawMeasuredAltitude, rawDesiredAltitude, ALTITUDE, ROTOR_MAIN);
         pidControl(measuredYaw, desiredYaw, YAW, ROTOR_TAIL);
 
         // Assumes three useless instructions per "count" of the delay
         // Hence 60 Hz
-        SysCtlDelay (SysCtlClockGet() / (3 * 60));
+        SysCtlDelay (SysCtlClockGet() / (3 * 120));
+
+        i = (i+1) % 20;
     }
 }

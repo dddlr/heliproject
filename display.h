@@ -24,7 +24,7 @@ void uartIntHandler(void);
 
 void UARTSend(char *statusMessage);
 
-void displayUART(int32_t altitude, int16_t yaw);
+void displayUART(int32_t measuredAltitude, int16_t measuredYaw, int32_t desiredAltitude, int16_t desiredYaw);
 
 void displayMeanVal(int16_t meanVal, int32_t altitudePercentage, DisplayState state);
 

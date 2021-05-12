@@ -30,8 +30,9 @@ void setPWMDuty(uint32_t duty, Rotor rotor)
 
     if (rotor == ROTOR_MAIN) {
         mainPWMDuty = duty;
-        PWMPulseWidthSet(PWM_MAIN_BASE, PWM_MAIN_OUTNUM,
-            period * duty / 100);
+         PWMPulseWidthSet(PWM_MAIN_BASE, PWM_MAIN_OUTNUM,
+              period * duty / 100);
+//        PWMPulseWidthSet(PWM_MAIN_BASE, PWM_MAIN_OUTNUM, period * 2 / 100);
     } else {
         tailPWMDuty = duty;
         PWMPulseWidthSet(PWM_TAIL_BASE, PWM_TAIL_OUTNUM,
