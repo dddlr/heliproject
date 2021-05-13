@@ -34,7 +34,9 @@ int32_t getTailControl(void);
 
 #define PID_FREQUENCY 120.0
 // TODO: add max control for yaw as well (70%)
-#define MAX_CONTROL 80
-#define MIN_CONTROL 40
+#define MAX_ALTITUDE_CONTROL 80
+#define MIN_ALTITUDE_CONTROL 40
+#define MAX_YAW_CONTROL 70
+#define MIN_YAW_CONTROL 0
 
 #endif /* CONTROL_H_ */

@@ -17,6 +17,7 @@
 #include "driverlib/systick.h"
 #include "utils/ustdlib.h"
 #include "motor.h"
+#include "yaw.h"
 #include "control.h"
 
 static PID altitudePID;
@@ -38,9 +39,9 @@ void initPID(void)
     altitudePID.integralGain = 0.05;
     altitudePID.derivativeGain = 1.25;
 
-    yawPID.proportionalGain = 3;
-    yawPID.integralGain = 0;
-    yawPID.derivativeGain = 0;
+    yawPID.proportionalGain = 5;
+    yawPID.integralGain = 0.08;
+    yawPID.derivativeGain = 1;
 
     prevAltitude.measuredValue = 0;
     prevAltitude.desiredValue = 0;
@@ -64,9 +65,11 @@ void initPID(void)
 }
 
 int32_t angularSubtract(int32_t x, int32_t y) {
-    if (x - y < -180) return x - y + 360 + 180;
-    if (x - y > 180)  return x - y - 360 + 180;
-    return x - y + 180;
+    // Output is in the range [-224,224], where 224 means x = y
+    // Note that the angle is measured in number of notches (where 448 = 360 degrees)
+    if (x - y < -YAW_MAX_ANGLE/2) return x - y + YAW_MAX_ANGLE;
+    if (x - y > YAW_MAX_ANGLE/2)  return x - y - YAW_MAX_ANGLE;
+    return x - y;
 }
 
 // void pidControl(Instant* previous, Instant* current, PID constants)
@@ -108,7 +111,7 @@ void pidControl(int32_t measuredValue, int32_t desiredValue, PIDInput pidInput, 
     // Integral error (uses trapezoidal rule)
     current->errorIntegral = previous->errorIntegral +
             1.0/(PID_FREQUENCY) *
-            (current->measuredValue + previous->measuredValue) / 2;
+            (current->error + previous->error) / 2;
 
     integral = constants->integralGain * current->errorIntegral;
 
@@ -117,11 +120,12 @@ void pidControl(int32_t measuredValue, int32_t desiredValue, PIDInput pidInput, 
     // TODO: figure out whether this type cast will actually work
     control = (int32_t)(proportional + integral + differential);
 
-    if (control > MAX_CONTROL) {
-        control = MAX_CONTROL;
-    }
-    if (control < MIN_CONTROL) {
-        control = MIN_CONTROL;
+    if (pidInput == ALTITUDE) {
+        if (control > MAX_ALTITUDE_CONTROL) control = MAX_ALTITUDE_CONTROL;
+        if (control < MIN_ALTITUDE_CONTROL) control = MIN_ALTITUDE_CONTROL;
+    } else {
+        if (control > MAX_YAW_CONTROL) control = MAX_YAW_CONTROL;
+        if (control < MIN_YAW_CONTROL) control = MIN_YAW_CONTROL;
     }
 
     if (rotor == ROTOR_MAIN) {
