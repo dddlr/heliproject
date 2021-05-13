@@ -14,18 +14,16 @@
  */
 
 #define BUF_SIZE 8
-// Assuming vertical motion of helicopter is < 4Hz
-//
-// 60 Hz allows the mean/buffer samples to be updated virtually instantaneously
-// for the human eye
-#define SAMPLE_RATE_HZ 64
+
+#define ADC_TRIGGER_FREQ 200
+
 // 12-bit ADC hence the maximum value is 4095 (i.e. at 3.3V)
 //
 // We have a 0.8V difference so 4095 * 0.8V / 3.3V is roughly 993
 #define ALTITUDE_DELTA 993
 
-// The interrupt handler for the SysTick interrupt.
-void SysTickIntHandler(void);
+// Initiates an ADC conversion.
+void ADCTrigger(void);
 
 // The handler for the ADC conversion complete interrupt. Writes to the circular buffer.
 void ADCIntHandler(void);

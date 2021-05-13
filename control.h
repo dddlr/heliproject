@@ -32,7 +32,7 @@ void pidControl(int32_t measuredValue, int32_t desiredValue, PIDInput pidInput, 
 int32_t getMainControl(void);
 int32_t getTailControl(void);
 
-#define PID_FREQUENCY 120.0
+#define PID_FREQUENCY 120
 // TODO: add max control for yaw as well (70%)
 #define MAX_ALTITUDE_CONTROL 80
 #define MIN_ALTITUDE_CONTROL 40

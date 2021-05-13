@@ -32,14 +32,10 @@ static circBuf_t altitudeBuffer;		// Buffer of size BUF_SIZE integers (sample va
 static uint32_t sampleCount;	// Counter for the interrupts
 
 /**
- * The interrupt handler for the SysTick interrupt.
+ * Initiates an ADC conversion.
  */
-void SysTickIntHandler(void)
+void ADCTrigger(void)
 {
-    // Poll the buttons
-    updateButtons();
-
-    // Initiate a conversion
     ADCProcessorTrigger(ADC0_BASE, 3); 
     sampleCount++;
 }
@@ -95,7 +91,7 @@ void initADC(void)
     ADCSequenceEnable(ADC0_BASE, 3);
 
     // Register the interrupt handler
-    ADCIntRegister (ADC0_BASE, 3, ADCIntHandler);
+    ADCIntRegister(ADC0_BASE, 3, ADCIntHandler);
   
     // Enable interrupts for ADC0 sequence 3 (clears any outstanding interrupts)
     ADCIntEnable(ADC0_BASE, 3);

@@ -21,22 +21,78 @@
 #include "motor.h"
 #include "control.h"
 
+#define MAX_SAMPLE_RATE 500
+
+typedef enum {
+    TASK_ADC,
+    TASK_BUTTON_POLLING,
+    TASK_DISPLAY,
+    TASK_BUTTON_STATUS,
+    TASK_PID,
+    N_TASKS
+} Task;
+
+
+typedef struct {
+    int16_t period;
+    int16_t timeTilRun;
+    // Time to wait before starting the execution of this task,
+    // where MAX_SAMPLE_RATE is one second.
+    int16_t handicap;
+    bool ready;
+} TaskStatus;
+
+// Each value must be less than or equal to MAX_SAMPLE_RATE
+static uint16_t taskFreqs[N_TASKS] = {ADC_TRIGGER_FREQ, 100, 50, 30, PID_FREQUENCY};
+// Delay PID calculations by 1 second (MAX_SAMPLE_RATE) to give
+// ADC time to populate its buffer and return correct averaged altitudes
+static uint16_t taskHandicaps[N_TASKS] = {0, 0, 0, 0, MAX_SAMPLE_RATE};
+static TaskStatus scheduledTasks[N_TASKS] = {};
+
+void timerInterruptHandler(void)
+{
+    uint16_t i = 0;
+    for (; i < N_TASKS; i++) {
+        if (scheduledTasks[i].handicap > 0) {
+            --scheduledTasks[i].handicap;
+            continue;
+        }
+
+        if (scheduledTasks[i].timeTilRun == 0) {
+            scheduledTasks[i].ready = true;
+            // Reset task
+            scheduledTasks[i].timeTilRun = scheduledTasks[i].period;
+        } else {
+            --scheduledTasks[i].timeTilRun;
+        }
+    }
+}
+
 void initClock(void)
 {
     // Set the clock rate to 20 MHz
-    SysCtlClockSet (SYSCTL_SYSDIV_10 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN |
+    SysCtlClockSet(SYSCTL_SYSDIV_10 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN |
                    SYSCTL_XTAL_16MHZ);
 
-    // Set up the period for the SysTick timer.  The SysTick timer period is
+    // Set up the period for the SysTick timer. The SysTick timer period is
     // set as a function of the system clock.
-    SysTickPeriodSet(SysCtlClockGet() / SAMPLE_RATE_HZ);
-
-    SysTickIntRegister(updateButtons);
-    SysTickIntRegister(SysTickIntHandler);
+    SysTickPeriodSet(SysCtlClockGet() / MAX_SAMPLE_RATE);
+    SysTickIntRegister(timerInterruptHandler);
 
     // Enable interrupt and device
     SysTickIntEnable();
     SysTickEnable();
+}
+
+void initTasks(void)
+{
+    uint16_t i = 0;
+    for (; i < N_TASKS; ++i) {
+        scheduledTasks[i].period = MAX_SAMPLE_RATE / taskFreqs[i];
+        scheduledTasks[i].timeTilRun = MAX_SAMPLE_RATE / taskFreqs[i];
+        scheduledTasks[i].handicap = taskHandicaps[i];
+        scheduledTasks[i].ready = false;
+    }
 }
 
 int main(void)
@@ -47,7 +103,7 @@ int main(void)
 
     whatButton button = NUM_BUTS;
 
-    bool gotInitHeight = true;
+    bool gotInitHeight = false;
     DisplayState state = DISPLAY_ALTITUDE;
 
     initButtons();
@@ -58,69 +114,76 @@ int main(void)
     initUART();
     initPWM();
     initPID();
+    initTasks();
 
     // Enable interrupts to the processor.
     IntMasterEnable();
 
-    // Delay by one second to give it enough time to fill up the buffer.
-    // Note that SysCtlDelay runs three instructions per loop so this is
-    // three times longer than necessary - this is for safety reasons.
-    SysCtlDelay(SysCtlClockGet() * BUF_SIZE / SAMPLE_RATE_HZ);
-
     while (1) {
-        rawMeasuredAltitude = getMeanVal();
-        measuredYaw = getYawAngle();
+        if (scheduledTasks[TASK_ADC].ready) {
+            ADCTrigger();
 
-        if (gotInitHeight) {
-            rawLandedAltitude = rawMeasuredAltitude;
-            gotInitHeight = false;
+            scheduledTasks[TASK_ADC].ready = false;
         }
 
-        //
-        // Update desired altitude and yaw
-        //
+        if (scheduledTasks[TASK_BUTTON_POLLING].ready) {
+            updateButtons();
 
-        button = checkWhatButton();
-
-        switch (button) {
-        case LEFT:
-            desiredYaw = (desiredYaw - 15 + 360) % 360;
-            break;
-
-        case RIGHT:
-            desiredYaw = (desiredYaw + 15 + 360) % 360;
-            break;
-
-        case UP:
-            desiredAltitude += 10;
-            if (desiredAltitude > 100) desiredAltitude = 100;
-            break;
-
-        case DOWN:
-            desiredAltitude -= 10;
-            if (desiredAltitude < 0) desiredAltitude = 0;
-            break;
+            scheduledTasks[TASK_BUTTON_POLLING].ready = false;
         }
 
-        measuredAltitude = (rawLandedAltitude - rawMeasuredAltitude) * 100 / ALTITUDE_DELTA;
+        if (scheduledTasks[TASK_DISPLAY].ready) {
+            displayMeanVal(rawMeasuredAltitude, measuredAltitude, state);
+            displayYaw(getYawAngle(), getYawDirection());
+            displayRotorPWM(getPWMDuty(ROTOR_MAIN), getPWMDuty(ROTOR_TAIL));
+            displayUART(measuredAltitude, measuredYaw, desiredAltitude, desiredYaw);
 
-        displayMeanVal(rawMeasuredAltitude, measuredAltitude, state);
-        displayYaw(getYawAngle(), getYawDirection());
+            scheduledTasks[TASK_DISPLAY].ready = false;
+        }
 
-        // Should run roughly four times every second
-        displayUART(measuredAltitude, measuredYaw, desiredAltitude, desiredYaw);
+        if (scheduledTasks[TASK_BUTTON_STATUS].ready) {
+            button = checkWhatButton();
 
-        displayRotorPWM(getPWMDuty(ROTOR_MAIN), getPWMDuty(ROTOR_TAIL));
+            switch (button) {
+            case LEFT:
+                desiredYaw = (desiredYaw - 15 + 360) % 360;
+                break;
 
-        // TODO: Implement timer scheduler (or equivalent) and have pidControl run
-        // at 50 Hz
-        rawDesiredAltitude = rawLandedAltitude - (desiredAltitude) * ALTITUDE_DELTA/100;
-        rawDesiredYaw = (int32_t)(desiredYaw * 448) / 360;
-        pidControl(rawMeasuredAltitude, rawDesiredAltitude, ALTITUDE, ROTOR_MAIN);
-        pidControl(measuredYaw, rawDesiredYaw, YAW, ROTOR_TAIL);
+            case RIGHT:
+                desiredYaw = (desiredYaw + 15 + 360) % 360;
+                break;
 
-        // Assumes three useless instructions per "count" of the delay
-        // Hence 60 Hz
-        SysCtlDelay (SysCtlClockGet() / (3 * 120));
+            case UP:
+                desiredAltitude += 10;
+                if (desiredAltitude > 100) desiredAltitude = 100;
+                break;
+
+            case DOWN:
+                desiredAltitude -= 10;
+                if (desiredAltitude < 0) desiredAltitude = 0;
+                break;
+            }
+
+            scheduledTasks[TASK_BUTTON_STATUS].ready = false;
+        }
+
+        if (scheduledTasks[TASK_PID].ready) {
+            rawMeasuredAltitude = getMeanVal();
+            if (!gotInitHeight) {
+                rawLandedAltitude = rawMeasuredAltitude;
+                gotInitHeight = true;
+            }
+
+            measuredYaw = getYawAngle();
+            measuredAltitude = (rawLandedAltitude - rawMeasuredAltitude) * 100 / ALTITUDE_DELTA;
+
+            rawDesiredAltitude = rawLandedAltitude - (desiredAltitude) * ALTITUDE_DELTA/100;
+            rawDesiredYaw = (int32_t)(desiredYaw * 448) / 360;
+
+            pidControl(rawMeasuredAltitude, rawDesiredAltitude, ALTITUDE, ROTOR_MAIN);
+            pidControl(measuredYaw, rawDesiredYaw, YAW, ROTOR_TAIL);
+
+            scheduledTasks[TASK_PID].ready = false;
+        }
     }
 }
