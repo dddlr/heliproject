@@ -19,13 +19,14 @@
 #include "driverlib/systick.h"
 #include "driverlib/interrupt.h"
 #include "circBufT.h"
+#include "motor.h"
 #include "yaw.h"
 
 static int8_t yawDirection = 0;
 static bool yawOutput[2] = {0};
 static bool prevYawOutput[2] = {0};
 // Yaw angle, measured in number of notches (also see YAW_MAX_ANGLE above)
-static int16_t yawAngle = 0, yawRefAngle = 0;
+static int16_t yawAngle = 0, yawRefAngle = YAW_REF_NOT_FOUND;
 
 static const int8_t quadratureLookup[16] = {
         QUAD_NULL,  QUAD_CW,    QUAD_CCW,   QUAD_ERROR,
@@ -82,32 +83,35 @@ void initYaw(void)
     // Setup the pin (PC4)
     SysCtlPeripheralEnable(YAW_REF_PERIPH_GPIO);
 
-    GPIOIntDisable(YAW_REF_BASE, YAW_REF_INT_PIN_4);
+    GPIOIntDisable(YAW_REF_BASE, YAW_REF_INT_PIN);
 
     // Set the GPIO pins as inputs
-    GPIOPinTypeGPIOInput(YAW_REF_BASE, YAW_REF_PIN_4);
+    GPIOPinTypeGPIOInput(YAW_REF_BASE, YAW_REF_PIN);
 
     // Set the GPIO pins Weak Pull Down, 2mA
-    GPIOPadConfigSet(YAW_REF_BASE, YAW_REF_PIN_4,
+    GPIOPadConfigSet(YAW_REF_BASE, YAW_REF_PIN,
                      YAW_QUAD_SIG_STRENGTH, YAW_QUAD_PIN_TYPE);
 
     // Set the GPIO pins to generate interrupts on both rising and falling edges
-    GPIOIntTypeSet(YAW_REF_BASE, YAW_REF_PIN_4,
+    GPIOIntTypeSet(YAW_REF_BASE, YAW_REF_PIN,
                    YAW_QUAD_EDGE_TYPE);
 
     // Register the interrupt handler
     GPIOIntRegister(YAW_REF_BASE, yawRefIntHandler);
 
     // Enable interrupts on GPIO Port B Pins 0, 1 for yaw channels A and B
-    GPIOIntEnable(YAW_REF_BASE, YAW_REF_INT_PIN_4);
+    GPIOIntEnable(YAW_REF_BASE, YAW_REF_INT_PIN);
 }
 
 void yawRefIntHandler(void)
 {
-    // Something.
-    GPIOIntClear(YAW_REF_BASE, YAW_REF_INT_PIN_4);
+    GPIOIntClear(YAW_REF_BASE, YAW_REF_INT_PIN);
 
     yawRefAngle = yawAngle;
+
+    // Already gotten reference angle, no need to handle
+    // this interrupt again
+    GPIOIntDisable(YAW_REF_BASE, YAW_REF_INT_PIN);
 }
 
 /**
@@ -140,6 +144,15 @@ void yawIntHandler(void)
         // (to avoid floating point arithmetic)
         yawAngle = (yawAngle + yawDirection + YAW_MAX_ANGLE) % YAW_MAX_ANGLE;
     }
+}
+
+/*
+ * Rotates the helicopter around until it finds the reference yaw angle, then
+ * sets the reference angle.
+ */
+void initReferenceYaw(void)
+{
+    setPWMDuty(YAW_REF_DUTY, ROTOR_TAIL);
 }
 
 int16_t getYawRefAngle(void)

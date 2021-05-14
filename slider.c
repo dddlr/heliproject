@@ -66,6 +66,5 @@ void updateSliders(void)
 sliderState checkSlider(switchSlider slider)
 {
     // If the current slider state is true, set to SLIDE_UP. Otherwise, SLIDE_DOWN.
-    // TODO: Do we need to make it more clearer version of this?
     return currSliderState[slider] ? SLIDE_UP : SLIDE_DOWN;
 }

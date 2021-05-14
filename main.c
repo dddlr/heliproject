@@ -10,6 +10,7 @@
 //*****************************************************************************
 
 #include <buttonsAPI.h>
+#include <helicopterState.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "driverlib/sysctl.h"
@@ -33,7 +34,6 @@ typedef enum {
     N_TASKS
 } Task;
 
-
 typedef struct {
     int16_t period;
     int16_t timeTilRun;
@@ -47,7 +47,11 @@ typedef struct {
 static uint16_t taskFreqs[N_TASKS] = {ADC_TRIGGER_FREQ, 100, 50, 30, PID_FREQUENCY};
 // Delay PID calculations by 1 second (MAX_SAMPLE_RATE) to give
 // ADC time to populate its buffer and return correct averaged altitudes
-static uint16_t taskHandicaps[N_TASKS] = {0, 0, 0, 0, MAX_SAMPLE_RATE};
+//
+// TODO: replace this with a general delay on ALL the tasks
+// to wait for ADC buffer to fill up AND for the heli to figure out
+// where the reference angle is
+static uint16_t taskHandicaps[N_TASKS] = {0, 0, 0, 0, MAX_SAMPLE_RATE*10};
 static TaskStatus scheduledTasks[N_TASKS] = {};
 
 void timerInterruptHandler(void)
@@ -100,14 +104,21 @@ void initTasks(void)
 
 int main(void)
 {
-    int32_t rawMeasuredAltitude = 0, rawLandedAltitude = 0;
-    int32_t measuredAltitude = 0, desiredAltitude = 0, rawDesiredAltitude = 0;
-    int32_t measuredYaw = 0, desiredYaw = 0, rawDesiredYaw = 0, initYawAngle = YAW_REF_NOT_FOUND;
+    int32_t rawMeasuredAltitude = -1, rawLandedAltitude = -1;
+    int32_t measuredAltitude = -1, desiredAltitude = 0, rawDesiredAltitude = 0;
+    int32_t measuredYaw = -1, desiredYaw = 0, rawDesiredYaw = 0;
 
     whatButton button = NUM_BUTS;
-    sliderState slider = NOCHANGE;
+    sliderState slider = NUM_SLIDER_STATES;
 
-    bool gotInitHeight = false, gotInitAngle = false, landed = true;
+    // Whether it is necessary to run the functions related to
+    // initialising reference altitude and yaw
+    // TODO: possibly move to helicopterState.c
+    bool needFetchInitValues = true;
+    // Whether the helicopter is landed
+    // TODO: move to helicopterState.c
+    bool landed = true;
+
     DisplayState state = DISPLAY_ALTITUDE;
 
     initButtons();
@@ -134,6 +145,7 @@ int main(void)
         if (scheduledTasks[TASK_BUTTON_POLLING].ready) {
             updateButtons();
             updateSliders();
+
             scheduledTasks[TASK_BUTTON_POLLING].ready = false;
         }
 
@@ -141,7 +153,8 @@ int main(void)
             displayMeanVal(rawMeasuredAltitude, measuredAltitude, state);
             displayYaw(measuredYaw);
             displayRotorPWM(getPWMDuty(ROTOR_MAIN), getPWMDuty(ROTOR_TAIL));
-            displayUART(measuredAltitude, measuredYaw, desiredAltitude, desiredYaw);
+            displayUART(measuredAltitude, measuredYaw, desiredAltitude,
+                        desiredYaw, getHelicopterMode());
 
             scheduledTasks[TASK_DISPLAY].ready = false;
         }
@@ -169,51 +182,56 @@ int main(void)
                 break;
             }
 
+            // Checking the state of the SW1 slider
+            slider = checkSlider(SW1_SLIDER);
+
+            // Ignore any changes to the slider while in landing mode
+            // and the landing is not yet complete
+            if (landed || getHelicopterMode() != LANDING_MODE) {
+                if (slider == SLIDE_UP) setHelicopterMode(FLYING_MODE);
+                else if (slider == SLIDE_DOWN) setHelicopterMode(LANDING_MODE);
+            }
+
             scheduledTasks[TASK_BUTTON_STATUS].ready = false;
         }
 
         if (scheduledTasks[TASK_PID].ready) {
-
             rawMeasuredAltitude = getMeanVal();
             measuredAltitude = (rawLandedAltitude - rawMeasuredAltitude) * 100 / ALTITUDE_DELTA;
             rawDesiredAltitude = rawLandedAltitude - (desiredAltitude) * ALTITUDE_DELTA/100;
             rawDesiredYaw = (int32_t)(desiredYaw * 448) / 360;
 
-            slider = checkSlider(SW1_SLIDER);  // Checking the state of the SW1 slider
+            switch (getHelicopterMode()) {
+            case FLYING_MODE:
+                landed = false; // No longer landed
 
-            switch (slider) {
-            case SLIDE_UP:  // Going FLYING mode
-                landed = false;     // No longer landed
-
-                if (!gotInitHeight) {
+                if (needFetchInitValues) {
                     rawLandedAltitude = rawMeasuredAltitude;
-                    gotInitHeight = true;
+                    initReferenceYaw();
+                    needFetchInitValues = false;
                 }
 
-                if (!gotInitAngle) {
-                    desiredAltitude = 0;
-                    setPWMDuty(YAW_REF_DUTY, ROTOR_TAIL);
-                    if (initYawAngle == YAW_REF_NOT_FOUND) {
-                        gotInitAngle = true;
-                    }
-                } else {
+                if (rawLandedAltitude != -1) {
+                    // Main rotor
+                    pidControl(rawMeasuredAltitude, rawDesiredAltitude, ALTITUDE, ROTOR_MAIN);
+                }
+
+                if (getYawRefAngle() != YAW_REF_NOT_FOUND) {
                     measuredYaw = getYawAngle() - getYawRefAngle();
-                    pidControl(rawMeasuredAltitude, rawDesiredAltitude, ALTITUDE, ROTOR_MAIN);  // Main
-                    pidControl(measuredYaw, rawDesiredYaw, YAW, ROTOR_TAIL);    // Tail
-                }
 
+                    // Tail rotor
+                    pidControl(measuredYaw, rawDesiredYaw, YAW, ROTOR_TAIL);
+                }
 
                 break;
-            case SLIDE_DOWN:  // Going LANDING mode
+
+            case LANDING_MODE:
 //                measuredAltitude = 0;
                 desiredAltitude = 0;
 //                measuredYaw = 0;
                 desiredYaw = 0;
 
                 if (landed) {
-                    gotInitHeight = false;   // Reset back to false to reinitialise the altitude reference
-                    gotInitAngle = false;
-                    initYawAngle = YAW_REF_NOT_FOUND;
                     setPWMDuty(0, ROTOR_MAIN);
                     setPWMDuty(0, ROTOR_TAIL);
                 } else {

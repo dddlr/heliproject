@@ -9,6 +9,7 @@
 // operating mode (LAND/FLY).
 //*****************************************************************************
 
+#include <helicopterState.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -21,8 +22,8 @@
 #include "driverlib/systick.h"
 #include "inc/hw_memmap.h"
 #include "buttonsAPI.h"
-#include "display.h"
 #include "yaw.h"
+#include "display.h"
 
 //DEBUG
 #include "control.h"
@@ -98,16 +99,21 @@ void UARTSend(char *statusMessage)
 /**
  * Displays the helicopter's status message on UART
  */
-void displayUART(int32_t measuredAltitude, int16_t measuredYaw, int32_t desiredAltitude, int16_t desiredYaw)
+void displayUART(int32_t measuredAltitude, int16_t measuredYaw,
+                 int32_t desiredAltitude, int16_t desiredYaw, HelicopterMode helicopterMode)
 {
-    //TODO: Implement Duty cycle and Mode
-
     measuredYaw = MAX_ANGLE_DEGS * measuredYaw / YAW_MAX_ANGLE;     // Getting the actual yaw degrees
 
     usprintf(statusMessage,
-             "---------- \r\n Yaw: %3d [%3d] | Alt: %3d%% [%3d%%] \r\n Control: main %3d%% / tail %3d%% \r\n",
-             measuredYaw, desiredYaw, measuredAltitude, desiredAltitude,
-             getPWMDuty(ROTOR_MAIN), getPWMDuty(ROTOR_TAIL));
+             "---------- \r\n Yaw: %3d [%3d] | Alt: %3d%% [%3d%%] \r\n Mode: [%s] Ctrl: main %3d%% / tail %3d%% \r\n",
+             measuredYaw,
+             desiredYaw,
+             measuredAltitude,
+             desiredAltitude,
+             getHelicopterModeString(),
+             getPWMDuty(ROTOR_MAIN),
+             getPWMDuty(ROTOR_TAIL)
+             );
 
     UARTSend(statusMessage);
 }

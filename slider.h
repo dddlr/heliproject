@@ -20,9 +20,8 @@
 #define SW2_PERIPH        SYSCTL_PERIPH_GPIOA
 #define SW2_PORT_PIN      GPIO_PIN_6
 
-// TODO: Do we need SW2_SLIDER?
 typedef enum {SW1_SLIDER, SW2_SLIDER, NUM_SLIDERS} switchSlider;
-typedef enum {SLIDE_UP, SLIDE_DOWN, NOCHANGE} sliderState;
+typedef enum {SLIDE_UP, SLIDE_DOWN, NUM_SLIDER_STATES} sliderState;
 
 void initSlider(void);
 void updateSliders(void);

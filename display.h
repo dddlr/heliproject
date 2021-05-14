@@ -8,6 +8,7 @@
  */
 
 #include <stdint.h>
+#include "helicopterState.h"
 
 #define MAX_ANGLE_DEGS 360
 
@@ -24,7 +25,9 @@ void uartIntHandler(void);
 
 void UARTSend(char *statusMessage);
 
-void displayUART(int32_t measuredAltitude, int16_t measuredYaw, int32_t desiredAltitude, int16_t desiredYaw);
+void displayUART(int32_t measuredAltitude, int16_t measuredYaw,
+                 int32_t desiredAltitude, int16_t desiredYaw,
+                 HelicopterMode helicopterMode);
 
 void displayMeanVal(int16_t meanVal, int32_t altitudePercentage, DisplayState state);
 
