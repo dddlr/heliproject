@@ -28,7 +28,7 @@ void displayUART(int32_t measuredAltitude, int16_t measuredYaw, int32_t desiredA
 
 void displayMeanVal(int16_t meanVal, int32_t altitudePercentage, DisplayState state);
 
-void displayYaw(int16_t yawAngle, int8_t yawDirection);
+void displayYaw(int16_t yawAngle);
 
 void displayRotorPWM(uint8_t mainPWMDuty, uint8_t tailPWMDuty);
 

@@ -19,6 +19,7 @@
 #include "motor.h"
 #include "yaw.h"
 #include "control.h"
+#include "slider.h"
 
 static PID altitudePID;
 static PID yawPID;
@@ -36,7 +37,7 @@ void initPID(void)
 {
     // TODO: initialise to something more sensible
     altitudePID.proportionalGain = 1.5;
-    altitudePID.integralGain = 0.05;
+    altitudePID.integralGain = 0.1;
     altitudePID.derivativeGain = 1.25;
 
     yawPID.proportionalGain = 5;
@@ -123,6 +124,7 @@ void pidControl(int32_t measuredValue, int32_t desiredValue, PIDInput pidInput, 
     if (pidInput == ALTITUDE) {
         if (control > MAX_ALTITUDE_CONTROL) control = MAX_ALTITUDE_CONTROL;
         if (control < MIN_ALTITUDE_CONTROL) control = MIN_ALTITUDE_CONTROL;
+
     } else {
         if (control > MAX_YAW_CONTROL) control = MAX_YAW_CONTROL;
         if (control < MIN_YAW_CONTROL) control = MIN_YAW_CONTROL;
@@ -130,6 +132,7 @@ void pidControl(int32_t measuredValue, int32_t desiredValue, PIDInput pidInput, 
 
     if (rotor == ROTOR_MAIN) {
         mainControl = control;
+
     } else {
         tailControl = control;
     }

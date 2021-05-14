@@ -107,7 +107,7 @@ void displayUART(int32_t measuredAltitude, int16_t measuredYaw, int32_t desiredA
     usprintf(statusMessage,
              "---------- \r\n Yaw: %3d [%3d] | Alt: %3d%% [%3d%%] \r\n Control: main %3d%% / tail %3d%% \r\n",
              measuredYaw, desiredYaw, measuredAltitude, desiredAltitude,
-             getMainControl(), getTailControl());
+             getPWMDuty(ROTOR_MAIN), getPWMDuty(ROTOR_TAIL));
 
     UARTSend(statusMessage);
 }
@@ -141,17 +141,17 @@ void displayMeanVal(int16_t meanVal, int32_t altitudePercentage, DisplayState st
 /**
  * Displays yaw angle and yaw direction.
  */
-void displayYaw(int16_t yawAngle, int8_t yawDirection)
+void displayYaw(int16_t yawAngle)
 {
     char string[17];
     // Convert from number of notches to degrees (rounding down)
-    int8_t angle = MAX_ANGLE_DEGS * yawAngle / YAW_MAX_ANGLE;
+    int16_t angle = MAX_ANGLE_DEGS * yawAngle / YAW_MAX_ANGLE;
     // Change angle range to [-180 degrees, 180 degrees]
     if (angle > MAX_ANGLE_DEGS / 2) {
         angle -= MAX_ANGLE_DEGS;
     }
 
-    usnprintf(string, sizeof(string), "YawAngle = %5d", angle);
+    usnprintf(string, sizeof(string), "Yaw = %5d", angle);
     OLEDStringDraw(string, 0, 1);
 }
 

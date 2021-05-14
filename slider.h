@@ -9,13 +9,23 @@
 
 #include <stdint.h>
 
+// Slider MAIN base
+#define SLIDER_PORT_BASE  GPIO_PORTA_BASE
+
+// SW1: PA7 (J1-10)
+#define SW1_PERIPH        SYSCTL_PERIPH_GPIOA   //At A-Pin
+#define SW1_PORT_PIN      GPIO_PIN_7
+
+// SW2: PA6 (J1-09)
+#define SW2_PERIPH        SYSCTL_PERIPH_GPIOA
+#define SW2_PORT_PIN      GPIO_PIN_6
+
+// TODO: Do we need SW2_SLIDER?
 typedef enum {SW1_SLIDER, SW2_SLIDER, NUM_SLIDERS} switchSlider;
 typedef enum {SLIDE_UP, SLIDE_DOWN, NOCHANGE} sliderState;
 
-void initClock(void);
 void initSlider(void);
-void sliderIntHandler(void);
-void updateSlider(void);
+void updateSliders(void);
 sliderState checkSlider(switchSlider slider);
 
 #endif /* SLIDER_H_ */

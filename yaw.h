@@ -29,6 +29,18 @@
 #define YAW_QUAD_EDGE_TYPE      GPIO_BOTH_EDGES
 #define YAW_QUAD_DDR            GPIO_DIR_MODE_IN
 
+/*
+ * Yaw reference configuration
+ */
+#define YAW_REF_PERIPH_GPIO     SYSCTL_PERIPH_GPIOC
+#define YAW_REF_BASE            GPIO_PORTC_BASE
+#define YAW_REF_INT_PIN_4       GPIO_INT_PIN_4
+#define YAW_REF_PIN_4           GPIO_PIN_4
+#define YAW_REF_SIG_STRENGTH    GPIO_STRENGTH_4MA
+#define YAW_REF_PIN_TYPE        GPIO_PIN_TYPE_STD_WPD
+#define YAW_REF_EDGE_TYPE       GPIO_BOTH_EDGES
+#define YAW_REF_DDR             GPIO_DIR_MODE_IN
+
 #define YAW_TOTAL_NOTCHES       112
 // Yaw angle is measured in number of notches, using
 // quadrature decoding (hence multiply by 4)
@@ -43,9 +55,13 @@
 // skipped a state, indicates a problem in the code
 #define QUAD_ERROR 2
 
+#define YAW_REF_NOT_FOUND 1000
+
 void initYaw(void);
 void readYawOutput(void);
 void yawIntHandler(void);
+void yawRefIntHandler(void);
+int16_t getYawRefAngle(void);
 int16_t getYawAngle(void);
 int8_t getYawDirection(void);
 

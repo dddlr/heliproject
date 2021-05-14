@@ -8,6 +8,8 @@
  */
 
 #include "motor.h"
+#include "slider.h"
+
 typedef enum pidInput {ALTITUDE, YAW} PIDInput;
 
 typedef struct {
@@ -33,10 +35,18 @@ int32_t getMainControl(void);
 int32_t getTailControl(void);
 
 #define PID_FREQUENCY 120
-// TODO: add max control for yaw as well (70%)
-#define MAX_ALTITUDE_CONTROL 80
-#define MIN_ALTITUDE_CONTROL 40
-#define MAX_YAW_CONTROL 70
-#define MIN_YAW_CONTROL 0
+// Real Helicopter
+#define MAX_ALTITUDE_CONTROL 60
+#define MIN_ALTITUDE_CONTROL 10
+#define MAX_YAW_CONTROL 40
+#define MIN_YAW_CONTROL 10
+#define YAW_REF_DUTY    10
+
+// Emulator
+//#define MAX_ALTITUDE_CONTROL 80
+//#define MIN_ALTITUDE_CONTROL 40
+//#define MAX_YAW_CONTROL 70
+//#define MIN_YAW_CONTROL 20
+//#define YAW_REF_DUTY    10
 
 #endif /* CONTROL_H_ */

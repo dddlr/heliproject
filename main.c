@@ -20,6 +20,7 @@
 #include "display.h"
 #include "motor.h"
 #include "control.h"
+#include "slider.h"
 
 #define MAX_SAMPLE_RATE 500
 
@@ -95,18 +96,22 @@ void initTasks(void)
     }
 }
 
+//void updateMeasureValues(void)
+
 int main(void)
 {
     int32_t rawMeasuredAltitude = 0, rawLandedAltitude = 0;
     int32_t measuredAltitude = 0, desiredAltitude = 0, rawDesiredAltitude = 0;
-    int32_t measuredYaw = 0, desiredYaw = 0, rawDesiredYaw = 0;
+    int32_t measuredYaw = 0, desiredYaw = 0, rawDesiredYaw = 0, initYawAngle = YAW_REF_NOT_FOUND;
 
     whatButton button = NUM_BUTS;
+    sliderState slider = NOCHANGE;
 
-    bool gotInitHeight = false;
+    bool gotInitHeight = false, gotInitAngle = false, landed = true;
     DisplayState state = DISPLAY_ALTITUDE;
 
     initButtons();
+    initSlider();
     initClock();
     initAltitude();
     initYaw();
@@ -128,13 +133,13 @@ int main(void)
 
         if (scheduledTasks[TASK_BUTTON_POLLING].ready) {
             updateButtons();
-
+            updateSliders();
             scheduledTasks[TASK_BUTTON_POLLING].ready = false;
         }
 
         if (scheduledTasks[TASK_DISPLAY].ready) {
             displayMeanVal(rawMeasuredAltitude, measuredAltitude, state);
-            displayYaw(getYawAngle(), getYawDirection());
+            displayYaw(measuredYaw);
             displayRotorPWM(getPWMDuty(ROTOR_MAIN), getPWMDuty(ROTOR_TAIL));
             displayUART(measuredAltitude, measuredYaw, desiredAltitude, desiredYaw);
 
@@ -168,20 +173,59 @@ int main(void)
         }
 
         if (scheduledTasks[TASK_PID].ready) {
+
             rawMeasuredAltitude = getMeanVal();
-            if (!gotInitHeight) {
-                rawLandedAltitude = rawMeasuredAltitude;
-                gotInitHeight = true;
-            }
-
-            measuredYaw = getYawAngle();
             measuredAltitude = (rawLandedAltitude - rawMeasuredAltitude) * 100 / ALTITUDE_DELTA;
-
             rawDesiredAltitude = rawLandedAltitude - (desiredAltitude) * ALTITUDE_DELTA/100;
             rawDesiredYaw = (int32_t)(desiredYaw * 448) / 360;
 
-            pidControl(rawMeasuredAltitude, rawDesiredAltitude, ALTITUDE, ROTOR_MAIN);
-            pidControl(measuredYaw, rawDesiredYaw, YAW, ROTOR_TAIL);
+            slider = checkSlider(SW1_SLIDER);  // Checking the state of the SW1 slider
+
+            switch (slider) {
+            case SLIDE_UP:  // Going FLYING mode
+                landed = false;     // No longer landed
+
+                if (!gotInitHeight) {
+                    rawLandedAltitude = rawMeasuredAltitude;
+                    gotInitHeight = true;
+                }
+
+                if (!gotInitAngle) {
+                    desiredAltitude = 0;
+                    setPWMDuty(YAW_REF_DUTY, ROTOR_TAIL);
+                    if (initYawAngle == YAW_REF_NOT_FOUND) {
+                        gotInitAngle = true;
+                    }
+                } else {
+                    measuredYaw = getYawAngle() - getYawRefAngle();
+                    pidControl(rawMeasuredAltitude, rawDesiredAltitude, ALTITUDE, ROTOR_MAIN);  // Main
+                    pidControl(measuredYaw, rawDesiredYaw, YAW, ROTOR_TAIL);    // Tail
+                }
+
+
+                break;
+            case SLIDE_DOWN:  // Going LANDING mode
+//                measuredAltitude = 0;
+                desiredAltitude = 0;
+//                measuredYaw = 0;
+                desiredYaw = 0;
+
+                if (landed) {
+                    gotInitHeight = false;   // Reset back to false to reinitialise the altitude reference
+                    gotInitAngle = false;
+                    initYawAngle = YAW_REF_NOT_FOUND;
+                    setPWMDuty(0, ROTOR_MAIN);
+                    setPWMDuty(0, ROTOR_TAIL);
+                } else {
+                    pidControl(rawMeasuredAltitude, rawDesiredAltitude, ALTITUDE, ROTOR_MAIN);  // Main
+                    pidControl(measuredYaw, rawDesiredYaw, YAW, ROTOR_TAIL);    // Tail
+
+                    if (measuredAltitude <= 0) {
+                        landed = true;
+                    }
+                }
+                break;
+            }
 
             scheduledTasks[TASK_PID].ready = false;
         }
