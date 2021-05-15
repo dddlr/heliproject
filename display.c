@@ -99,15 +99,17 @@ void UARTSend(char *statusMessage)
 /**
  * Displays the helicopter's status message on UART
  */
-void displayUART(int32_t measuredAltitude, int16_t measuredYaw,
-                 int32_t desiredAltitude, int16_t desiredYaw, HelicopterMode helicopterMode)
+void displayUART(int32_t measuredAltitude, int32_t measuredYaw,
+                 int32_t desiredAltitude, int32_t desiredYaw,
+                 HelicopterMode helicopterMode, int16_t referenceYaw)
 {
-    measuredYaw = MAX_ANGLE_DEGS * measuredYaw / YAW_MAX_ANGLE;     // Getting the actual yaw degrees
+    measuredYaw = MAX_ANGLE_DEGS * measuredYaw / YAW_MAX_ANGLE; // Getting the actual yaw degrees
 
     usprintf(statusMessage,
-             "---------- \r\n Yaw: %3d [%3d] | Alt: %3d%% [%3d%%] \r\n Mode: [%s] Ctrl: main %3d%% / tail %3d%% \r\n",
+             "---------- \r\n Yaw: %3d [%3d] (ref: %3d) | Alt: %3d%% [%3d%%] \r\n Mode: [%s] Ctrl: main %3d%% / tail %3d%% \r\n",
              measuredYaw,
              desiredYaw,
+             referenceYaw,
              measuredAltitude,
              desiredAltitude,
              getHelicopterModeString(),

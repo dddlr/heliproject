@@ -24,11 +24,13 @@
 #include "slider.h"
 
 #define MAX_SAMPLE_RATE 500
+#define ALTITUDE_NOT_FOUND -1
 
 typedef enum {
     TASK_ADC,
     TASK_BUTTON_POLLING,
     TASK_DISPLAY,
+    TASK_UART,
     TASK_BUTTON_STATUS,
     TASK_PID,
     N_TASKS
@@ -44,14 +46,15 @@ typedef struct {
 } TaskStatus;
 
 // Each value must be less than or equal to MAX_SAMPLE_RATE
-static uint16_t taskFreqs[N_TASKS] = {ADC_TRIGGER_FREQ, 100, 50, 30, PID_FREQUENCY};
+static uint16_t taskFreqs[N_TASKS] = {ADC_TRIGGER_FREQ, 100, 50, 5, 30, PID_FREQUENCY};
 // Delay PID calculations by 1 second (MAX_SAMPLE_RATE) to give
 // ADC time to populate its buffer and return correct averaged altitudes
 //
 // TODO: replace this with a general delay on ALL the tasks
 // to wait for ADC buffer to fill up AND for the heli to figure out
 // where the reference angle is
-static uint16_t taskHandicaps[N_TASKS] = {0, 0, 0, 0, MAX_SAMPLE_RATE*10};
+// static uint16_t taskHandicaps[N_TASKS] = {0, 0, 0, 0, 0, MAX_SAMPLE_RATE*10};
+static uint16_t taskHandicaps[N_TASKS] = {0}; // disable handicaps for the time being
 static TaskStatus scheduledTasks[N_TASKS] = {};
 
 void timerInterruptHandler(void)
@@ -100,12 +103,13 @@ void initTasks(void)
     }
 }
 
-//void updateMeasureValues(void)
-
 int main(void)
 {
-    int32_t rawMeasuredAltitude = -1, rawLandedAltitude = -1;
-    int32_t measuredAltitude = -1, desiredAltitude = 0, rawDesiredAltitude = 0;
+    int32_t rawMeasuredAltitude = ALTITUDE_NOT_FOUND;
+    int32_t rawLandedAltitude = ALTITUDE_NOT_FOUND;
+    int32_t measuredAltitude = ALTITUDE_NOT_FOUND;
+    int32_t desiredAltitude = 0;
+    int32_t rawDesiredAltitude = 0;
     int32_t measuredYaw = -1, desiredYaw = 0, rawDesiredYaw = 0;
 
     whatButton button = NUM_BUTS;
@@ -153,10 +157,15 @@ int main(void)
             displayMeanVal(rawMeasuredAltitude, measuredAltitude, state);
             displayYaw(measuredYaw);
             displayRotorPWM(getPWMDuty(ROTOR_MAIN), getPWMDuty(ROTOR_TAIL));
-            displayUART(measuredAltitude, measuredYaw, desiredAltitude,
-                        desiredYaw, getHelicopterMode());
 
             scheduledTasks[TASK_DISPLAY].ready = false;
+        }
+
+        if (scheduledTasks[TASK_UART].ready) {
+            displayUART(measuredAltitude, measuredYaw, desiredAltitude,
+                        desiredYaw, getHelicopterMode(), getYawRefAngle());
+
+            scheduledTasks[TASK_UART].ready = false;
         }
 
         if (scheduledTasks[TASK_BUTTON_STATUS].ready) {
@@ -188,8 +197,11 @@ int main(void)
             // Ignore any changes to the slider while in landing mode
             // and the landing is not yet complete
             if (landed || getHelicopterMode() != LANDING_MODE) {
-                if (slider == SLIDE_UP) setHelicopterMode(FLYING_MODE);
-                else if (slider == SLIDE_DOWN) setHelicopterMode(LANDING_MODE);
+                if (slider == SLIDE_UP && getHelicopterMode() != STARTUP_MODE) {
+                    setHelicopterMode(FLYING_MODE);
+                } else if (slider == SLIDE_DOWN) {
+                    setHelicopterMode(LANDING_MODE);
+                }
             }
 
             scheduledTasks[TASK_BUTTON_STATUS].ready = false;
@@ -201,7 +213,16 @@ int main(void)
             rawDesiredAltitude = rawLandedAltitude - (desiredAltitude) * ALTITUDE_DELTA/100;
             rawDesiredYaw = (int32_t)(desiredYaw * 448) / 360;
 
+            if (getYawRefAngle() != YAW_REF_NOT_FOUND) {
+                measuredYaw = getYawAngle() - getYawRefAngle();
+            }
+
             switch (getHelicopterMode()) {
+            case STARTUP_MODE:
+                setPWMDuty(0, ROTOR_MAIN);
+                setPWMDuty(0, ROTOR_TAIL);
+                break;
+
             case FLYING_MODE:
                 landed = false; // No longer landed
 
@@ -211,13 +232,11 @@ int main(void)
                     needFetchInitValues = false;
                 }
 
-                if (rawLandedAltitude != -1) {
-                    // Main rotor
-                    pidControl(rawMeasuredAltitude, rawDesiredAltitude, ALTITUDE, ROTOR_MAIN);
-                }
-
                 if (getYawRefAngle() != YAW_REF_NOT_FOUND) {
-                    measuredYaw = getYawAngle() - getYawRefAngle();
+                    if (rawLandedAltitude != ALTITUDE_NOT_FOUND) {
+                        // Main rotor
+                        pidControl(rawMeasuredAltitude, rawDesiredAltitude, ALTITUDE, ROTOR_MAIN);
+                    }
 
                     // Tail rotor
                     pidControl(measuredYaw, rawDesiredYaw, YAW, ROTOR_TAIL);
@@ -226,9 +245,7 @@ int main(void)
                 break;
 
             case LANDING_MODE:
-//                measuredAltitude = 0;
                 desiredAltitude = 0;
-//                measuredYaw = 0;
                 desiredYaw = 0;
 
                 if (landed) {
@@ -238,7 +255,9 @@ int main(void)
                     pidControl(rawMeasuredAltitude, rawDesiredAltitude, ALTITUDE, ROTOR_MAIN);  // Main
                     pidControl(measuredYaw, rawDesiredYaw, YAW, ROTOR_TAIL);    // Tail
 
-                    if (measuredAltitude <= 0) {
+                    // Set the helicopter to landed only when the altitude is
+                    // at 10% and the yaw is within 5 degrees of the reference angle
+                    if (measuredAltitude <= 0 && abs(measuredYaw) < 5) {
                         landed = true;
                     }
                 }

@@ -7,7 +7,12 @@
  *  Author: Coppy Nawaphanarat (44035285), Grant Wong, Will Archer
  */
 
-typedef enum {LANDING_MODE, FLYING_MODE, NUM_HELICOPTER_MODES} HelicopterMode;
+typedef enum {
+    STARTUP_MODE,
+    LANDING_MODE,
+    FLYING_MODE,
+    NUM_HELICOPTER_MODES
+} HelicopterMode;
 
 HelicopterMode getHelicopterMode();
 void setHelicopterMode(HelicopterMode newMode);

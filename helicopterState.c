@@ -10,7 +10,7 @@
 
 #include "helicopterState.h"
 
-static HelicopterMode helicopterMode = LANDING_MODE;
+static HelicopterMode helicopterMode = STARTUP_MODE;
 
 HelicopterMode getHelicopterMode()
 {
@@ -24,8 +24,12 @@ void setHelicopterMode(HelicopterMode newMode)
 
 char* getHelicopterModeString()
 {
-    if (helicopterMode == LANDING_MODE) {
+    switch (helicopterMode) {
+    case STARTUP_MODE:
+        return "starting";
+    case LANDING_MODE:
         return "landing";
+    case FLYING_MODE:
+        return "flying";
     }
-    return "flying";
 }
