@@ -36,9 +36,9 @@ int32_t getTailControl(void);
 
 #define PID_FREQUENCY 120
 // Real Helicopter
-#define MAX_ALTITUDE_CONTROL 60
+#define MAX_ALTITUDE_CONTROL 80
 #define MIN_ALTITUDE_CONTROL 10
-#define MAX_YAW_CONTROL 40
+#define MAX_YAW_CONTROL 60
 #define MIN_YAW_CONTROL 10
 
 // Emulator

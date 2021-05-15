@@ -41,8 +41,8 @@ void initPID(void)
     altitudePID.derivativeGain = 1.25;
 
     yawPID.proportionalGain = 5;
-    yawPID.integralGain = 0.08;
-    yawPID.derivativeGain = 1;
+    yawPID.integralGain = 0.4;
+    yawPID.derivativeGain = 1.25;
 
     prevAltitude.measuredValue = 0;
     prevAltitude.desiredValue = 0;
