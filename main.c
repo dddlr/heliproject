@@ -135,6 +135,7 @@ int main(void)
     initPWM();
     initPID();
     initTasks();
+    initResetButton();
 
     // Enable interrupts to the processor.
     IntMasterEnable();
