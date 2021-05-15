@@ -32,16 +32,9 @@ void initSlider(void)
     GPIOPinTypeGPIOInput(SLIDER_PORT_BASE, SW1_PORT_PIN);
     GPIOPadConfigSet(SLIDER_PORT_BASE, SW1_PORT_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPD);
 
-    // Initialising SW2
-    SysCtlPeripheralEnable(SW2_PERIPH);
-    GPIOPinTypeGPIOInput(SLIDER_PORT_BASE, SW2_PORT_PIN);
-    GPIOPadConfigSet(SLIDER_PORT_BASE, SW2_PORT_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPD);
-
     // Initialise state of the slider on TiVa board (SW1 and SW2)
     prevSliderState[SW1_SLIDER] = GPIOPinRead(SLIDER_PORT_BASE, SW1_PORT_PIN) == SW1_PORT_PIN;
     currSliderState[SW1_SLIDER] = GPIOPinRead(SLIDER_PORT_BASE, SW1_PORT_PIN) == SW1_PORT_PIN;
-    prevSliderState[SW2_SLIDER] = GPIOPinRead(SLIDER_PORT_BASE, SW2_PORT_PIN) == SW2_PORT_PIN;
-    currSliderState[SW2_SLIDER] = GPIOPinRead(SLIDER_PORT_BASE, SW2_PORT_PIN) == SW2_PORT_PIN;
 }
 
 /**
@@ -57,7 +50,6 @@ void updateSliders(void)
     }
 
     currSliderState[SW1_SLIDER] = (GPIOPinRead(SLIDER_PORT_BASE, SW1_PORT_PIN) == SW1_PORT_PIN);
-    currSliderState[SW2_SLIDER] = (GPIOPinRead(SLIDER_PORT_BASE, SW2_PORT_PIN) == SW2_PORT_PIN);
 }
 
 /**

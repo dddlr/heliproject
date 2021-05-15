@@ -22,6 +22,7 @@
 #include "motor.h"
 #include "control.h"
 #include "slider.h"
+#include "resetButton.h"
 
 #define MAX_SAMPLE_RATE 500
 #define ALTITUDE_NOT_FOUND -1
@@ -46,7 +47,7 @@ typedef struct {
 } TaskStatus;
 
 // Each value must be less than or equal to MAX_SAMPLE_RATE
-static uint16_t taskFreqs[N_TASKS] = {ADC_TRIGGER_FREQ, 100, 50, 5, 30, PID_FREQUENCY};
+static uint16_t taskFreqs[N_TASKS] = {ADC_TRIGGER_FREQ, 100, 50, 10, 30, PID_FREQUENCY};
 // Delay PID calculations by 1 second (MAX_SAMPLE_RATE) to give
 // ADC time to populate its buffer and return correct averaged altitudes
 //
