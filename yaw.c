@@ -136,6 +136,13 @@ void yawIntHandler(void)
             (yawOutput[0]<<1) + (yawOutput[1]);
     yawDirection = quadratureLookup[index];
 
+    // TODO remove later. yawAngle shouldn't be < -448 so if the program stops here,
+    // there is something terribly wrong.
+    if (yawAngle < -447) {
+        index = yawAngle;
+
+    }
+
     if ((prevYawOutput[0] != yawOutput[0] || prevYawOutput[1] != yawOutput[1]) &&
             yawDirection != QUAD_ERROR) {
         // Handles negative numbers as long as -YAW_MAX_ANGLE <= yawAngle < infinity

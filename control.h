@@ -39,7 +39,7 @@ int32_t getTailControl(void);
 #define MAX_ALTITUDE_CONTROL 80
 #define MIN_ALTITUDE_CONTROL 10
 #define MAX_YAW_CONTROL 60
-#define MIN_YAW_CONTROL 10
+#define MIN_YAW_CONTROL 5
 
 // Emulator
 //#define MAX_ALTITUDE_CONTROL 80

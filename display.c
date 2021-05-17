@@ -105,6 +105,8 @@ void displayUART(int32_t measuredAltitude, int32_t measuredYaw,
 {
     measuredYaw = MAX_ANGLE_DEGS * measuredYaw / YAW_MAX_ANGLE; // Getting the actual yaw degrees
 
+    if (measuredYaw < -180) measuredYaw += MAX_ANGLE_DEGS;
+
     usprintf(statusMessage,
              "---------- \r\n Yaw: %3d [%3d] (ref: %3d) | Alt: %3d%% [%3d%%] \r\n Mode: [%s] Ctrl: main %3d%% / tail %3d%% \r\n",
              measuredYaw,

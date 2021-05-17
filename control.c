@@ -35,14 +35,14 @@ int32_t tailControl = 0;
 
 void initPID(void)
 {
-    // TODO: initialise to something more sensible
-    altitudePID.proportionalGain = 1.5;
-    altitudePID.integralGain = 0.1;
-    altitudePID.derivativeGain = 1.25;
+    altitudePID.proportionalGain = 1.4;
+    altitudePID.integralGain = 0.4;
+    altitudePID.derivativeGain = 1.4;
 
-    yawPID.proportionalGain = 5;
-    yawPID.integralGain = 0.4;
-    yawPID.derivativeGain = 1.25;
+    yawPID.proportionalGain = 0.25;
+    yawPID.integralGain = 3;
+    yawPID.derivativeGain = 15;
+    //0.25, 3, 15: Slow but can be used.
 
     prevAltitude.measuredValue = 0;
     prevAltitude.desiredValue = 0;

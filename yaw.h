@@ -57,7 +57,7 @@
 
 // The duty cycle to use for reference yaw angle
 // Not used outside of yaw.c
-#define YAW_REF_DUTY    20
+#define YAW_REF_DUTY    45
 
 #define YAW_REF_NOT_FOUND -1
 
