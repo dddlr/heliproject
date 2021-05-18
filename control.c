@@ -36,13 +36,13 @@ int32_t tailControl = 0;
 void initPID(void)
 {
     altitudePID.proportionalGain = 1.4;
-    altitudePID.integralGain = 0.4;
-    altitudePID.derivativeGain = 1.4;
+    altitudePID.integralGain = 2;
+    altitudePID.derivativeGain = -50;
 
-    yawPID.proportionalGain = 0.25;
-    yawPID.integralGain = 3;
-    yawPID.derivativeGain = 15;
-    //0.25, 3, 15: Slow but can be used.
+    yawPID.proportionalGain = 2.2;
+    yawPID.integralGain = 1.2;
+    yawPID.derivativeGain = -75;
+    //2.2, 1.2, -75 good enough
 
     prevAltitude.measuredValue = 0;
     prevAltitude.desiredValue = 0;
@@ -56,12 +56,12 @@ void initPID(void)
 
     prevYaw.measuredValue = 0;
     prevYaw.desiredValue = 0;
-    prevYaw.errorIntegral = 0;
+    prevYaw.errorIntegral = 20;
     prevYaw.error = 0;
 
     currentYaw.measuredValue = 0;
     currentYaw.desiredValue = 0;
-    currentYaw.errorIntegral = 0;
+    currentYaw.errorIntegral = 20;
     currentYaw.error = 0;
 }
 
