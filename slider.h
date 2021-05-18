@@ -16,7 +16,11 @@
 #define SW1_PERIPH        SYSCTL_PERIPH_GPIOA   //At A-Pin
 #define SW1_PORT_PIN      GPIO_PIN_7
 
-typedef enum {SW1_SLIDER, NUM_SLIDERS} switchSlider;
+// SW2: Reset configuration (active LOW) (J1-09)
+#define SW2_PERIPH        SYSCTL_PERIPH_GPIOA
+#define SW2_PORT_PIN      GPIO_PIN_6
+
+typedef enum {SW1_SLIDER, SW2_SLIDER, NUM_SLIDERS} switchSlider;
 typedef enum {SLIDE_UP, SLIDE_DOWN, NUM_SLIDER_STATES} sliderState;
 
 void initSlider(void);

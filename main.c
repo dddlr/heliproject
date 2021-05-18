@@ -22,7 +22,7 @@
 #include "motor.h"
 #include "control.h"
 #include "slider.h"
-#include "resetButton.h"
+//#include "resetButton.h"
 
 #define MAX_SAMPLE_RATE 500
 #define ALTITUDE_NOT_FOUND -1
@@ -114,7 +114,7 @@ int main(void)
     int32_t measuredYaw = -1, desiredYaw = 0, rawDesiredYaw = 0;
 
     whatButton button = NUM_BUTS;
-    sliderState slider = NUM_SLIDER_STATES;
+    sliderState slider = NUM_SLIDER_STATES, slider2 = NUM_SLIDER_STATES;
 
     // Whether it is necessary to run the functions related to
     // initialising reference altitude and yaw
@@ -136,7 +136,6 @@ int main(void)
     initPWM();
     initPID();
     initTasks();
-    initResetButton();
 
     // Enable interrupts to the processor.
     IntMasterEnable();
@@ -204,6 +203,14 @@ int main(void)
                 } else if (slider == SLIDE_DOWN) {
                     setHelicopterMode(LANDING_MODE);
                 }
+            }
+
+            // Checking the state of the SW2 slider
+            slider2 = checkSlider(SW2_SLIDER);
+
+            // If the SW2 slider is up then, activate soft reset.
+            if (slider2 == SLIDE_UP) {
+                SysCtlReset();
             }
 
             scheduledTasks[TASK_BUTTON_STATUS].ready = false;
