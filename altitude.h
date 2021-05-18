@@ -20,7 +20,7 @@
 // 12-bit ADC hence the maximum value is 4095 (i.e. at 3.3V)
 //
 // We have a 0.8V difference so 4095 * 0.8V / 3.3V is roughly 993
-#define ALTITUDE_DELTA 993
+#define ALTITUDE_DELTA 1241
 
 // Initiates an ADC conversion.
 void ADCTrigger(void);
